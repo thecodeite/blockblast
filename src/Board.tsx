@@ -21,9 +21,13 @@ export function Board() {
         <div className="Board_Column" key={i}>
           {column.map((cell, j) =>
             cell === null ? (
-              <NullBoardCell key={`${i}_${j}`} />
+              <NullBoardCell key={`null_${i}_${j}`} />
             ) : (
-              <BoardCell key={cell.id} cell={cell} onClick={click(cell)} />
+              <BoardCell
+                key={`cell_${cell.id}`}
+                cell={cell}
+                onClick={click(cell)}
+              />
             )
           )}
         </div>

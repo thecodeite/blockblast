@@ -6,6 +6,15 @@ const colourChar: { [key: string]: string } = {
   yellow: '★',
   green: '☐',
   blue: '☽',
+
+  rotorH: '↔',
+  rotorV: '↕',
+  bomb: '💣',
+
+  cube_red: '🧊',
+  cube_yellow: '🧊',
+  cube_green: '🧊',
+  cube_blue: '🧊',
 }
 
 interface BoardCellArgs {
@@ -14,8 +23,8 @@ interface BoardCellArgs {
 }
 
 export function BoardCell({ cell, onClick }: BoardCellArgs) {
-  const { colour } = cell
-  const char = colourChar[colour] || colour
+  const { variant } = cell
+  const char = colourChar[variant] || variant
 
   const style = {
     bottom: `${cell.y * 41}px`,
@@ -23,7 +32,7 @@ export function BoardCell({ cell, onClick }: BoardCellArgs) {
 
   return (
     <div
-      className={`BoardCell BoardCell_${colour}`}
+      className={`BoardCell BoardCell_${variant}`}
       style={style}
       onClick={onClick}
     >

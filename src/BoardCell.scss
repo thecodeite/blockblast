@@ -26,19 +26,19 @@
     }
   }
 
-  &_red {
+  &_red, &_cube_red {
     background-color: rgb(207, 82, 82);
   }
 
-  &_green {
+  &_green, &_cube_green {
     background-color: rgb(80, 116, 38);
   }
 
-  &_blue {
+  &_blue, &_cube_blue {
     background-color: rgb(78, 105, 153);
   }
 
-  &_yellow {
+  &_yellow, &_cube_yellow {
     background-color: rgb(255, 252, 72);
   }
 }
