@@ -3,7 +3,7 @@ import { useState } from 'react'
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { Cell, createGame, Game, tap } from './game'
-import level from './levels/level-rotors'
+import level from './levels/level3'
 
 export function Board() {
   const [game, setGame] = useState(() => createGame(level))
@@ -27,7 +27,7 @@ export function Board() {
   }, [game])
 
   const style = {
-    height: `calc(${game.size} * 42px)`,
+    height: `calc(${game.levelDef.height} * 42px)`,
   }
 
   return (

@@ -6,6 +6,8 @@ const colourChar: { [key: string]: string } = {
   yellow: '★',
   green: '☐',
   blue: '☽',
+  orange: '▵',
+  purple: '⬡',
 
   rotorH: '↔',
   rotorV: '↕',
@@ -15,6 +17,8 @@ const colourChar: { [key: string]: string } = {
   cube_yellow: '🧊',
   cube_green: '🧊',
   cube_blue: '🧊',
+  cube_orange: '🧊',
+  cube_purple: '🧊',
 }
 
 interface BoardCellArgs {
