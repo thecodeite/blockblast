@@ -32,7 +32,10 @@ export function BoardCell({ cell, onClick }: BoardCellArgs) {
 
   return (
     <div
-      className={`BoardCell BoardCell_${variant}`}
+      className={
+        `BoardCell BoardCell_${variant}` +
+        (cell.remove ? ' BoardCell_remove' : '')
+      }
       style={style}
       onClick={onClick}
     >

@@ -7,7 +7,10 @@
 .BoardCell {
   position:absolute;
 
-  transition: bottom 0.25s;
+  transition: bottom 0.25s,
+    width 0.25s,
+    height 0.25s,
+    margin 0.25s;
 
   width: 40px;
   height: 40px;
@@ -40,5 +43,11 @@
 
   &_yellow, &_cube_yellow {
     background-color: rgb(255, 252, 72);
+  }
+
+  &_remove {
+    width: 10px;
+    height: 10px;
+    margin: 15px;
   }
 }

@@ -1,15 +1,30 @@
+import { useEffect } from 'react'
 import { useState } from 'react'
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { Cell, createGame, Game, tap } from './game'
+import level from './levels/level-rotors'
 
 export function Board() {
-  const [game, setGame] = useState(() => createGame())
+  const [game, setGame] = useState(() => createGame(level))
   const { columns } = game
 
   const click = (cell: Cell) => () => {
     setGame((oldGame: Game) => tap(oldGame, cell))
   }
+
+  useEffect(() => {
+    if (game.nextGame) {
+      const nextGame = game.nextGame
+      const h = setTimeout(() => {
+        console.log(`tick`)
+        setGame(nextGame)
+      }, 10)
+      return () => clearTimeout(h)
+    } else {
+      console.log(`done`)
+    }
+  }, [game])
 
   const style = {
     height: `calc(${game.size} * 42px)`,
