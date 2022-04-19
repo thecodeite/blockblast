@@ -1,3 +1,4 @@
+// import 'core-js/actual/array/group-by'
 import { Prng } from './Prng'
 import { LevelDef } from './types'
 
@@ -25,16 +26,25 @@ export interface TapCell extends Cell {
 
 type CellSpace = RemoveCell | Cell | null
 
+export interface ColStat {
+  length: number
+  bottom: number
+}
 export interface Game {
   prng: Prng
   levelDef: LevelDef
   columns: CellSpace[][]
   nextGame?: Game
+  colStats: ColStat[]
+}
+
+export interface CellColumn {
+  length: number
+  start: number
+  bottom: boolean
 }
 
 type CellFilter = (column: CellSpace[], x: number) => CellSpace[]
-
-// const colours = ['red', 'blue', 'green', 'yellow']
 
 function createColumn(
   { prng, levelDef: { colours } }: Game,
@@ -58,6 +68,130 @@ function notUndefinedOrNull<T>(x: T | undefined | null): x is T {
   return x !== undefined && x !== null
 }
 
+export function pivotArray(initial: string[], width: number): string[][] {
+  const stringCols = Array.from({ length: width }, (_, x) => {
+    return initial.reduce((p, c) => [...p, c[x]], [] as string[])
+  })
+
+  return stringCols
+}
+
+export type CreateCellFunc = (ch: string, x: number, y: number) => Cell | null
+
+const colourSymbols: { [key: string]: string } = {
+  r: 'red',
+  y: 'yellow',
+  b: 'blue',
+  g: 'green',
+  o: 'orange',
+  p: 'purple',
+}
+
+const toySymbols: { [key: string]: string } = {
+  '↔': 'rotorH',
+  '↕': 'rotorV',
+  '*': 'bomb',
+  R: 'cube_red',
+  Y: 'cube_yellow',
+  B: 'cube_blue',
+  G: 'cube_green',
+  O: 'cube_orange',
+  P: 'cube_purple',
+}
+
+export const createCell =
+  (game: Game) => (ch: string, x: number, y: number) => {
+    if (colourSymbols[ch]) {
+      return {
+        type: 'colour',
+        id: nextId++,
+        x,
+        y,
+        variant: colourSymbols[ch],
+      }
+    } else if (toySymbols[ch]) {
+      return {
+        type: 'toy',
+        id: nextId++,
+        x,
+        y,
+        variant: toySymbols[ch],
+      }
+    } else if (ch === '.') {
+      return {
+        type: 'colour',
+        id: nextId++,
+        x,
+        y,
+        variant: game.prng.nextOf(game.levelDef.colours),
+      }
+    } else {
+      return undefined
+    }
+  }
+
+export function convertColumnToChunks(
+  x: number,
+  arr: string[],
+  createCell: CreateCellFunc
+) {
+  const chunks: CellColumn[] = []
+  let activeChunk: CellColumn | undefined = undefined
+
+  arr.forEach((str, i) => {
+    if (str !== '_') {
+      if (!activeChunk) {
+        activeChunk = {
+          length: 1,
+          start: i,
+          bottom: false,
+        }
+        chunks.push(activeChunk)
+      } else {
+        activeChunk.length++
+      }
+    } else {
+      if (activeChunk) {
+        activeChunk = undefined
+      }
+    }
+  })
+
+  chunks[chunks.length - 1].bottom = true
+
+  return chunks
+}
+
+export function charToCell(ch: string, x: number, y: number, game: Game) {
+  if (colourSymbols[ch]) {
+    return {
+      type: 'colour',
+      id: nextId++,
+      x,
+      y,
+      variant: colourSymbols[ch],
+    }
+  } else if (toySymbols[ch]) {
+    return {
+      type: 'toy',
+      id: nextId++,
+      x,
+      y,
+      variant: toySymbols[ch],
+    }
+    // } else if (ch === '_') {
+    //   return
+  } else {
+    return {
+      type: 'colour',
+      id: nextId++,
+      x,
+      y,
+      variant: game.prng.nextOf(game.levelDef.colours),
+    }
+  }
+}
+
 export function createGame(levelDef: LevelDef): Game {
   const prng = new Prng('test')
 
@@ -65,32 +199,30 @@ export function createGame(levelDef: LevelDef): Game {
     return levelDef.initial.reduce((p, c) => p + c[x], '')
   })
 
-  const colourSymbols: { [key: string]: string } = {
-    r: 'red',
-    y: 'yellow',
-    b: 'blue',
-    g: 'green',
-    o: 'orange',
-    p: 'purple',
-  }
+  // console.log('stringCols:', stringCols)
+  const colStats = stringCols.map((str) => {
+    let bottom = 0
+    while (str[str.length - bottom - 1] === '_') {
+      bottom++
+    }
+    const length = str.split('').filter((x) => x !== '_').length
 
-  const toySymbols: { [key: string]: string } = {
-    '↔': 'rotorH',
-    '↕': 'rotorV',
-    '*': 'bomb',
-    R: 'cube_red',
-    Y: 'cube_yellow',
-    B: 'cube_blue',
-    G: 'cube_green',
-    O: 'cube_orange',
-    P: 'cube_purple',
-  }
+    return {
+      bottom,
+      length,
+    }
+  })
+
+  console.log('colStats:', colStats)
 
   const columns: Cell[][] = stringCols.map((str, x) => {
+    const colStat = colStats[x]
     return str
       .split('')
+      .filter((str) => str !== '_')
       .reverse()
-      .map((ch, y) => {
+      .map((ch, yIndex) => {
+        const y = yIndex + colStat.bottom
         if (colourSymbols[ch]) {
           return {
             type: 'colour',
@@ -107,8 +239,6 @@ export function createGame(levelDef: LevelDef): Game {
             y,
             variant: toySymbols[ch],
           }
-          // } else if (ch === '_') {
-          //   return
         } else {
           return {
             type: 'colour',
@@ -121,9 +251,10 @@ export function createGame(levelDef: LevelDef): Game {
       })
   })
 
-  const game = {
+  const game: Game = {
     prng,
     levelDef,
+    colStats,
     columns,
   }
 
@@ -154,11 +285,21 @@ function doRemove(column: CellSpace[], x: number): CellSpace[] {
   return column.map((cell) => (cell?.remove ? null : cell))
 }
 
-function doFall(column: CellSpace[]): Cell[] {
-  return column.filter(isCell).map((cell, y) => ({
-    ...cell,
-    y,
-  }))
+function doFall(game: Game) {
+  const { colStats } = game
+  return (column: CellSpace[], x: number): Cell[] => {
+    return column.filter(isCell).map((cell, yIndex) => {
+      const colStat = colStats[x]
+      let y = colStat.bottom + yIndex
+      if (y >= colStat.bottom + colStat.length) {
+        y += game.levelDef.height - colStat.length - colStat.bottom
+      }
+      return {
+        ...cell,
+        y,
+      }
+    })
+  }
 }
 
 const toRemove = (
@@ -178,9 +319,13 @@ const toRemove = (
 
 function addNewCells(game: Game) {
   return (column: Cell[], x: number): Cell[] => {
-    const missing = game.levelDef.height * 2 - column.length
+    const totalExpected = game.colStats[x].length * 2
+    const missing = totalExpected - column.length
+    const spare = game.colStats[x].length - missing
+    const yStart = game.levelDef.height + spare
+
     if (missing > 0) {
-      const newCells = createColumn(game, missing, x, column.length)
+      const newCells = createColumn(game, missing, x, yStart)
       return [...column, ...newCells]
     } else {
       return column
@@ -360,7 +505,7 @@ export function tapFirstToy(game: Game, on: Cell): Game {
         }
       })
       colls = collSets[collSets.length - 1]
-      const withFall = colls.map(doFall).map(addNewCells(game))
+      const withFall = colls.map(doFall(game)).map(addNewCells(game))
       collSets.push(withFall)
 
       console.log('collSets.length:', collSets.length)
@@ -420,7 +565,7 @@ export function tapFirstToy(game: Game, on: Cell): Game {
       })
 
       colls = collSets[collSets.length - 1]
-      const withFall = colls.map(doFall).map(addNewCells(game))
+      const withFall = colls.map(doFall(game)).map(addNewCells(game))
       collSets.push(withFall)
 
       return collSets
@@ -456,7 +601,7 @@ export function tapFirstToy(game: Game, on: Cell): Game {
 
   const moves = tapToy(game.columns, on, true)
   const last = moves[moves.length - 1]
-  const withFall = last.map(doFall).map(addNewCells(game))
+  const withFall = last.map(doFall(game)).map(addNewCells(game))
   return createGames([...moves, withFall], game)
 }
 
@@ -499,7 +644,7 @@ export function tapColour(game: Game, on: Cell): Game {
   const withRemove = game.columns.map((column) => column.map(removeNeighbours))
   const withNull = withRemove.map(doRemove)
   const withToy = withNull.map(addToyAt)
-  const withFall = withToy.map(doFall).map(addNewCells(game))
+  const withFall = withToy.map(doFall(game)).map(addNewCells(game))
 
   return createGames([withRemove, withRemove, withToy, withFall], game)
 }

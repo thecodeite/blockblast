@@ -3,7 +3,7 @@ import { useState } from 'react'
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { Cell, createGame, Game, tap } from './game'
-import level from './levels/level3'
+import level from './levels/level-bump'
 
 export function Board() {
   const [game, setGame] = useState(() => createGame(level))

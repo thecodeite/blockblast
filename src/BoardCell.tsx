@@ -1,5 +1,5 @@
 import './BoardCell.scss'
-import { Cell } from './game'
+import { Cell, ColStat } from './game'
 
 const colourChar: { [key: string]: string } = {
   red: 'ᐤ',
