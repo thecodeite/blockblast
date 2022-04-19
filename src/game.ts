@@ -1,4 +1,5 @@
 // import 'core-js/actual/array/group-by'
+import { makeChallange } from './challanges.ts/challanges'
 import { Prng } from './Prng'
 import { LevelDef } from './types'
 
@@ -8,11 +9,13 @@ export interface Cell {
   remove?: boolean
   tap?: boolean
   tapped?: true
-  type: 'colour' | 'toy'
+  type: 'colour' | 'toy' | 'challange'
   id: number
   variant: string
   x: number
   y: number
+
+  onTick?: (game: Game, cell: Cell) => Cell | null
 }
 
 export interface RemoveCell extends Cell {
@@ -28,7 +31,7 @@ type CellSpace = RemoveCell | Cell | null
 
 export interface ColStat {
   length: number
-  bottom: number
+  offsets: number[]
 }
 export interface Game {
   prng: Prng
@@ -47,18 +50,21 @@ export interface CellColumn {
 type CellFilter = (column: CellSpace[], x: number) => CellSpace[]
 
 function createColumn(
-  { prng, levelDef: { colours } }: Game,
+  { prng, colStats, levelDef: { colours } }: Game,
   num: number,
   x: number,
   yStart: number
 ): Cell[] {
-  return Array.from({ length: num }, (_, y) => ({
-    type: 'colour',
-    id: nextId++,
-    x,
-    y: yStart + y,
-    variant: prng.nextOf(colours),
-  }))
+  return Array.from({ length: num }, (_, yIndex) => {
+    const y = colStats[x].offsets[yStart + yIndex]
+    return {
+      type: 'colour',
+      id: nextId++,
+      x,
+      y,
+      variant: prng.nextOf(colours),
+    }
+  })
 }
 
 function notUndefined<T>(x: T | undefined): x is T {
@@ -101,7 +107,13 @@ const toySymbols: { [key: string]: string } = {
 
 export const createCell =
   (game: Game) => (ch: string, x: number, y: number) => {
-    if (colourSymbols[ch]) {
+    console.log(
+      'game.levelDef.challanges?.[ch]:',
+      game.levelDef.challanges?.[ch]
+    )
+    if (game.levelDef.challanges?.[ch]) {
+      return makeChallange(colourSymbols[ch], x, y, nextId++)
+    } else if (colourSymbols[ch]) {
       return {
         type: 'colour',
         id: nextId++,
@@ -163,7 +175,9 @@ export function convertColumnToChunks(
 }
 
 export function charToCell(ch: string, x: number, y: number, game: Game) {
-  if (colourSymbols[ch]) {
+  if (game.levelDef.challanges?.[ch]) {
+    return makeChallange(colourSymbols[ch], x, y, nextId++)
+  } else if (colourSymbols[ch]) {
     return {
       type: 'colour',
       id: nextId++,
@@ -179,8 +193,6 @@ export function charToCell(ch: string, x: number, y: number, game: Game) {
       y,
       variant: toySymbols[ch],
     }
-    // } else if (ch === '_') {
-    //   return
   } else {
     return {
       type: 'colour',
@@ -192,6 +204,24 @@ export function charToCell(ch: string, x: number, y: number, game: Game) {
   }
 }
 
+export function createOffsets(str: string): number[] {
+  let bottom = 0
+  while (str[str.length - bottom - 1] === '_') {
+    bottom++
+  }
+  const strArr = str.split('')
+  const nonSpace = strArr.filter((x) => x !== '_')
+  const arr = strArr.reverse().slice(bottom)
+
+  const offsets = [...arr, ...nonSpace]
+    .map((str, i) => {
+      return str !== '_' ? bottom + i : undefined
+    })
+    .filter(notUndefined)
+
+  return offsets
+}
+
 export function createGame(levelDef: LevelDef): Game {
   const prng = new Prng('test')
 
@@ -199,31 +229,25 @@ export function createGame(levelDef: LevelDef): Game {
     return levelDef.initial.reduce((p, c) => p + c[x], '')
   })
 
-  // console.log('stringCols:', stringCols)
   const colStats = stringCols.map((str) => {
-    let bottom = 0
-    while (str[str.length - bottom - 1] === '_') {
-      bottom++
-    }
-    const length = str.split('').filter((x) => x !== '_').length
-
+    const offsets = createOffsets(str)
     return {
-      bottom,
-      length,
+      length: offsets.length / 2,
+      offsets,
     }
   })
 
-  console.log('colStats:', colStats)
-
-  const columns: Cell[][] = stringCols.map((str, x) => {
+  const columns: CellSpace[][] = stringCols.map((str, x) => {
     const colStat = colStats[x]
     return str
       .split('')
       .filter((str) => str !== '_')
       .reverse()
       .map((ch, yIndex) => {
-        const y = yIndex + colStat.bottom
-        if (colourSymbols[ch]) {
+        const y = colStat.offsets[yIndex]
+        if (levelDef.challanges?.[ch]) {
+          return makeChallange(levelDef.challanges[ch], nextId++, x, y)
+        } else if (colourSymbols[ch]) {
           return {
             type: 'colour',
             id: nextId++,
@@ -290,10 +314,8 @@ function doFall(game: Game) {
   return (column: CellSpace[], x: number): Cell[] => {
     return column.filter(isCell).map((cell, yIndex) => {
       const colStat = colStats[x]
-      let y = colStat.bottom + yIndex
-      if (y >= colStat.bottom + colStat.length) {
-        y += game.levelDef.height - colStat.length - colStat.bottom
-      }
+      let y = colStat.offsets[yIndex]
+
       return {
         ...cell,
         y,
@@ -318,11 +340,11 @@ const toRemove = (
 }
 
 function addNewCells(game: Game) {
-  return (column: Cell[], x: number): Cell[] => {
+  return (column: CellSpace[], x: number): CellSpace[] => {
     const totalExpected = game.colStats[x].length * 2
     const missing = totalExpected - column.length
-    const spare = game.colStats[x].length - missing
-    const yStart = game.levelDef.height + spare
+    //const spare = game.colStats[x].length - missing
+    const yStart = totalExpected - missing
 
     if (missing > 0) {
       const newCells = createColumn(game, missing, x, yStart)
@@ -334,11 +356,44 @@ function addNewCells(game: Game) {
 }
 
 export function tap(game: Game, on: Cell): Game {
-  if (on.type === 'colour') {
-    return tapColour(game, on)
-  } else {
-    return tapFirstToy(game, on)
+  const nextGame =
+    on.type === 'colour' ? tapColour(game, on) : tapFirstToy(game, on)
+
+  let lastGame = nextGame
+  while (lastGame.nextGame) {
+    lastGame = lastGame.nextGame
   }
+
+  const afterTick = doTick(lastGame)
+  return afterTick
+}
+
+function doTick(game: Game): Game {
+  let changed = false
+
+  const withRemove = game.columns.map((column) =>
+    column.map((cell) => {
+      if (cell?.onTick) {
+        const nextCell = cell.onTick(game, cell)
+        console.log('nextCell, cell:', nextCell, cell)
+        if (nextCell !== cell) {
+          changed = true
+        }
+        return nextCell
+      } else {
+        return cell
+      }
+    })
+  )
+
+  if (!changed) return game
+
+  const withNull = withRemove.map(doRemove)
+  const withFall = withNull.map(doFall(game)).map(addNewCells(game))
+
+  console.log('go')
+  game.nextGame = createGames([withRemove, withNull, withFall], game)
+  return game
 }
 
 function removeCell(cellToRemove: Cell) {

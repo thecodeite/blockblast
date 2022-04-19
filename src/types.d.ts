@@ -5,4 +5,6 @@ export interface LevelDef {
   colours: string[]
   win: { [key: string]: number }
   moves: number
+
+  challanges?: { [key: string]: string }
 }

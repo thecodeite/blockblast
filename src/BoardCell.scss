@@ -53,6 +53,11 @@
     background-color: rgb(193, 127, 27);
   }
 
+  &_weight_1, &_weight_2, &_weight_3 {
+    background-color: rgb(24, 165, 186);
+    border-radius: 50%;
+  }
+
   &_remove {
     width: 10px;
     height: 10px;

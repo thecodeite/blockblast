@@ -1,7 +1,7 @@
 import './BoardCell.scss'
 import { Cell, ColStat } from './game'
 
-const colourChar: { [key: string]: string } = {
+const cellChar: { [key: string]: string } = {
   red: 'ᐤ',
   yellow: '★',
   green: '☐',
@@ -19,6 +19,9 @@ const colourChar: { [key: string]: string } = {
   cube_blue: '🧊',
   cube_orange: '🧊',
   cube_purple: '🧊',
+
+  weight_1: 'w1',
+  weight_2: 'w2',
 }
 
 interface BoardCellArgs {
@@ -28,7 +31,7 @@ interface BoardCellArgs {
 
 export function BoardCell({ cell, onClick }: BoardCellArgs) {
   const { variant } = cell
-  const char = colourChar[variant] || variant
+  const char = cellChar[variant] || variant
 
   const style = {
     bottom: `${cell.y * 41}px`,

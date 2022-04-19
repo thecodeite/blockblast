@@ -4,11 +4,11 @@ export const level2: LevelDef = {
   height: 5,
   width: 9,
   initial: [
-    'rrrr_r___', //
-    'bbbbbbb__', //
-    '_ggggggg_', //
-    '__yyyyyyy', //
-    '___p_pppp', //
+    '__rrr_rrr', //
+    '_bb_bbbbb', //
+    'gg__g_ggg', //
+    '_yy_yyyyy', //
+    '__ppp_ppp', //
   ],
   colours: ['blue', 'yellow', 'red', 'orange', 'green', 'purple'],
   win: {

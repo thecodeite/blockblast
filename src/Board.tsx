@@ -3,7 +3,7 @@ import { useState } from 'react'
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { Cell, createGame, Game, tap } from './game'
-import level from './levels/level-bump'
+import level from './levels/level'
 
 export function Board() {
   const [game, setGame] = useState(() => createGame(level))
@@ -19,7 +19,7 @@ export function Board() {
       const h = setTimeout(() => {
         console.log(`tick`)
         setGame(nextGame)
-      }, 10)
+      }, 100)
       return () => clearTimeout(h)
     } else {
       console.log(`done`)
