@@ -33,12 +33,20 @@ export interface ColStat {
   length: number
   offsets: number[]
 }
+
+interface Score {
+  name: string
+  left: number
+}
 export interface Game {
   prng: Prng
   levelDef: LevelDef
   columns: CellSpace[][]
   nextGame?: Game
   colStats: ColStat[]
+
+  score: Score[]
+  movesLeft: number
 }
 
 export interface CellColumn {
@@ -280,6 +288,8 @@ export function createGame(levelDef: LevelDef): Game {
     levelDef,
     colStats,
     columns,
+    score: Object.entries(levelDef.win).map(([name, left]) => ({ name, left })),
+    movesLeft: levelDef.moves,
   }
 
   const withNewCells = columns.map(addNewCells(game))
@@ -713,6 +723,7 @@ function createGames(
 
   const res = {
     ...game,
+    movesLeft: game.movesLeft - 1,
     columns,
     nextGame:
       tail.length === 0

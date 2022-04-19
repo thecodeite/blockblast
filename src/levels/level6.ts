@@ -22,7 +22,7 @@ export const level6: LevelDef = {
 
   win: {
     weight_1: 1,
-    weight_2: 2,
+    weight_2: 1,
   },
   moves: 23,
 }

@@ -1,12 +1,15 @@
 import { useEffect } from 'react'
-import { useState } from 'react'
+
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
-import { Cell, createGame, Game, tap } from './game'
-import level from './levels/level'
+import { Cell, Game, tap } from './game'
 
-export function Board() {
-  const [game, setGame] = useState(() => createGame(level))
+interface BoardArgs {
+  game: Game
+  setGame: React.Dispatch<React.SetStateAction<Game>>
+}
+
+export function Board({ game, setGame }: BoardArgs) {
   const { columns } = game
 
   const click = (cell: Cell) => () => {
