@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
-import { Cell, Game, tap } from './game'
+import { tap } from './game'
+import { Cell, Game } from './types'
 
 interface BoardArgs {
   game: Game

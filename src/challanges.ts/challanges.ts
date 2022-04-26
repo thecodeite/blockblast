@@ -1,4 +1,5 @@
-import { Cell, Game } from '../game'
+import { toRemove } from '../cellUtils'
+import { Cell, Game } from '../types'
 
 export function makeChallange(
   name: string,
@@ -6,7 +7,21 @@ export function makeChallange(
   x: number,
   y: number
 ): Cell | null {
-  if (name.startsWith('weight_')) {
+  if (name === 'beachball') {
+    const cell: Cell = {
+      id,
+      x,
+      y,
+      type: 'challange',
+      variant: 'beachball',
+
+      onNeighbourPop: (game: Game, cell: Cell, neighbour: Cell) => {
+        return toRemove(cell)
+      },
+    }
+
+    return cell
+  } else if (name.startsWith('weight_')) {
     const cell: Cell = {
       id,
       x,
@@ -14,9 +29,14 @@ export function makeChallange(
       type: 'challange',
       variant: name,
 
+      // Indestructable
+      onDestroy: (cell: Cell) => {
+        console.log(`Try to destroy`, cell)
+        return cell
+      },
+
       onTick: (game: Game, cell: Cell) => {
         const { x, y } = cell
-        console.log('x,y:', x, y)
         const bottomOffset = game.colStats[x].offsets[0]
         console.log(
           'y <= bottomOffset, y, bottomOffset:',

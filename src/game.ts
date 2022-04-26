@@ -1,61 +1,18 @@
 // import 'core-js/actual/array/group-by'
+import { toRemove } from './cellUtils'
 import { makeChallange } from './challanges.ts/challanges'
 import { Prng } from './Prng'
-import { LevelDef } from './types'
+import {
+  Cell,
+  CellFilter,
+  CellSpace,
+  Game,
+  LevelDef,
+  RemoveCell,
+  TapCell,
+} from './types'
 
 let nextId = 0
-
-export interface Cell {
-  remove?: boolean
-  tap?: boolean
-  tapped?: true
-  type: 'colour' | 'toy' | 'challange'
-  id: number
-  variant: string
-  x: number
-  y: number
-
-  onTick?: (game: Game, cell: Cell) => Cell | null
-}
-
-export interface RemoveCell extends Cell {
-  remove: true
-  original: Cell
-}
-export interface TapCell extends Cell {
-  tap: true
-  original: Cell
-}
-
-type CellSpace = RemoveCell | Cell | null
-
-export interface ColStat {
-  length: number
-  offsets: number[]
-}
-
-interface Score {
-  name: string
-  left: number
-}
-export interface Game {
-  prng: Prng
-  levelDef: LevelDef
-  columns: CellSpace[][]
-  nextGame?: Game
-  colStats: ColStat[]
-
-  score: Score[]
-  movesLeft: number
-}
-
-export interface CellColumn {
-  length: number
-  start: number
-  bottom: boolean
-}
-
-type CellFilter = (column: CellSpace[], x: number) => CellSpace[]
 
 function createColumn(
   { prng, colStats, levelDef: { colours } }: Game,
@@ -113,6 +70,7 @@ const toySymbols: { [key: string]: string } = {
   P: 'cube_purple',
 }
 
+/*
 export const createCell =
   (game: Game) => (ch: string, x: number, y: number) => {
     console.log(
@@ -210,7 +168,7 @@ export function charToCell(ch: string, x: number, y: number, game: Game) {
       variant: game.prng.nextOf(game.levelDef.colours),
     }
   }
-}
+}*/
 
 export function createOffsets(str: string): number[] {
   let bottom = 0
@@ -315,7 +273,7 @@ function isCell(cellSpace: CellSpace): cellSpace is Cell {
   return !!cellSpace
 }
 
-function doRemove(column: CellSpace[], x: number): CellSpace[] {
+function doRemove(column: CellSpace[]): CellSpace[] {
   return column.map((cell) => (cell?.remove ? null : cell))
 }
 
@@ -331,21 +289,6 @@ function doFall(game: Game) {
         y,
       }
     })
-  }
-}
-
-const toRemove = (
-  cell: CellSpace,
-  force?: true
-): null | RemoveCell | TapCell => {
-  if (cell) {
-    if (cell.type === 'colour' || force) {
-      return { ...cell, original: cell, remove: true }
-    } else {
-      return { ...cell, original: cell, tap: true }
-    }
-  } else {
-    return null
   }
 }
 
@@ -366,16 +309,16 @@ function addNewCells(game: Game) {
 }
 
 export function tap(game: Game, on: Cell): Game {
-  const nextGame =
+  const afterTap =
     on.type === 'colour' ? tapColour(game, on) : tapFirstToy(game, on)
 
-  let lastGame = nextGame
+  let lastGame = afterTap
   while (lastGame.nextGame) {
     lastGame = lastGame.nextGame
   }
 
-  const afterTick = doTick(lastGame)
-  return afterTick
+  lastGame.nextGame = doTick(lastGame)
+  return afterTap
 }
 
 function doTick(game: Game): Game {
@@ -401,9 +344,7 @@ function doTick(game: Game): Game {
   const withNull = withRemove.map(doRemove)
   const withFall = withNull.map(doFall(game)).map(addNewCells(game))
 
-  console.log('go')
-  game.nextGame = createGames([withRemove, withNull, withFall], game)
-  return game
+  return createGames([withRemove, withNull, withFall], game)
 }
 
 function removeCell(cellToRemove: Cell) {
@@ -706,12 +647,44 @@ export function tapColour(game: Game, on: Cell): Game {
     return cols
   }
 
-  const withRemove = game.columns.map((column) => column.map(removeNeighbours))
+  const allCells = game.columns.flat()
+  const pops = new Map<number, Cell>()
+  ;[...neighbours].forEach((poppingCell) => {
+    cardinalNeighbourIds
+      .map(([x, y]) =>
+        allCells.find(
+          (c) =>
+            poppingCell.y + y < game.levelDef.height &&
+            c !== null &&
+            c.x === poppingCell.x + x &&
+            c.y === poppingCell.y + y
+        )
+      )
+      .filter((cell) => cell?.onNeighbourPop)
+      .filter(notUndefinedOrNull)
+      .forEach((cell) => pops.set(cell.id, poppingCell))
+  })
+  console.log('pops:', pops)
+  const withPopEffect = game.columns.map((column) =>
+    column.map((cell) => {
+      if (cell && pops.has(cell.id) && cell.onNeighbourPop) {
+        const poppingCell = pops.get(cell.id) as Cell
+        return cell.onNeighbourPop(game, cell, poppingCell)
+      } else {
+        return cell
+      }
+    })
+  )
+
+  const withRemove = withPopEffect.map((column) => column.map(removeNeighbours))
   const withNull = withRemove.map(doRemove)
   const withToy = withNull.map(addToyAt)
   const withFall = withToy.map(doFall(game)).map(addNewCells(game))
 
-  return createGames([withRemove, withRemove, withToy, withFall], game)
+  return createGames(
+    [withPopEffect, withRemove, withNull, withToy, withFall],
+    game
+  )
 }
 
 function createGames(
