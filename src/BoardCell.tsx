@@ -25,7 +25,9 @@ const cellChar: { [key: string]: string } = {
   weight_3: 'w3',
   weight_4: 'w4',
 
-  beachball: 'bb',
+  beachball: ' ',
+
+  block_1: '_',
 }
 
 interface BoardCellArgs {

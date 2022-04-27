@@ -114,13 +114,29 @@ export function createGame(levelString: string): Game {
             y,
             variant: toySymbols[ch],
           }
-        } else {
+        } else if (ch === '.') {
           return {
             type: 'colour',
             id: nextId(),
             x,
             y,
             variant: prng.nextOf(levelDef.colours),
+          }
+        } else if (ch === ' ') {
+          return {
+            type: 'null',
+            id: nextId(),
+            x,
+            y,
+            variant: 'null',
+          }
+        } else {
+          return {
+            type: 'null',
+            id: nextId(),
+            x,
+            y,
+            variant: 'null',
           }
         }
       })
@@ -165,6 +181,10 @@ export function createGame(levelString: string): Game {
 }
 
 export function tap(game: Game, on: Cell): Game {
+  if (on.type !== 'colour' && on.type !== 'toy') {
+    return game
+  }
+
   const afterTap =
     on.type === 'colour' ? tapColour(game, on) : tapFirstToy(game, on)
 

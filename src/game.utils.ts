@@ -85,8 +85,11 @@ export function createColumn(
 export function doFall(game: Game) {
   const { colStats } = game
   return (column: Cell[], x: number): Cell[] => {
+    const firstNoGravity =
+      [...column].reverse().find((c) => c.noGravity)?.y || -1
+
     return column
-      .filter((c) => c.type !== 'null')
+      .filter((c) => c.type !== 'null' || c.y < firstNoGravity)
       .map((cell, yIndex) => {
         const colStat = colStats[x]
         const y = colStat.offsets[yIndex]

@@ -20,6 +20,8 @@ export interface Cell {
   x: number
   y: number
 
+  noGravity?: true
+
   onDestroy?: (cell: Cell) => Cell | RemoveCell
   onTick?: (game: Game, cell: Cell) => Cell
   onNeighbourPop?: (game: Game, cell: Cell, neighbour: Cell) => Cell

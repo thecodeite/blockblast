@@ -54,6 +54,19 @@ export function makeChallange(
       },
     }
     return cell
+  } else if (name.startsWith('block_')) {
+    return {
+      id,
+      x,
+      y,
+      type: 'challange',
+      variant: name,
+      noGravity: true,
+
+      onNeighbourPop: (game: Game, cell: Cell, neighbour: Cell) => {
+        return toRemove(cell)
+      },
+    } as Cell
   } else {
     return {
       type: 'null',
