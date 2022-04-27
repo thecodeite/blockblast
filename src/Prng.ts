@@ -1,7 +1,12 @@
 export class Prng {
   #seed: number
 
-  constructor(str: string) {
+  constructor(str: string | number) {
+    if (typeof str === 'number') {
+      this.#seed = str
+      return
+    }
+
     let h = 1779033703 ^ str.length
     for (var i = 0; i < str.length; i++) {
       h = Math.imul(h ^ str.charCodeAt(i), 3432918353)
@@ -11,6 +16,11 @@ export class Prng {
     h = Math.imul(h ^ (h >>> 16), 2246822507)
     h = Math.imul(h ^ (h >>> 13), 3266489909)
     this.#seed = (h ^= h >>> 16) >>> 0
+  }
+
+  clone(): Prng {
+    const tmp = new Prng(this.#seed)
+    return tmp
   }
 
   nextInt() {

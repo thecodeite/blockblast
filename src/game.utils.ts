@@ -1,0 +1,184 @@
+import { isCell, notUndefinedOrNull, toRemove } from './cellUtils'
+import { Cell, CellSpace, Game, Scores, TapStep, TapStep2 } from './types'
+
+let _nextId = 0
+
+export function nextId() {
+  return _nextId++
+}
+
+export const cardinalNeighbourIds = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+]
+export function findNeighbours(cell: Cell, game: Game) {
+  const allCells = game.columns.flat()
+  const neighbours = new Set([cell])
+  const search = [cell]
+
+  const isNeigbour =
+    cell.type === 'colour'
+      ? (c: Cell) => c.variant === cell.variant
+      : (c: Cell) => c.type === 'toy'
+
+  function isCell(c: CellSpace | undefined): c is Cell {
+    return !!c && isNeigbour(c)
+  }
+
+  while (search.length > 0) {
+    const searchCell = search.pop() as Cell
+    const cardinalNeighbours = cardinalNeighbourIds
+      .map(([x, y]) =>
+        allCells.find(
+          (c) =>
+            searchCell.y + y < game.levelDef.height &&
+            c !== null &&
+            c.x === searchCell.x + x &&
+            c.y === searchCell.y + y
+        )
+      )
+      .filter(isCell)
+
+    cardinalNeighbours.forEach((cn) => {
+      if (!neighbours.has(cn)) {
+        neighbours.add(cn)
+        search.push(cn)
+      }
+    })
+  }
+
+  return neighbours
+}
+
+export function createColumn(
+  { prng, colStats, levelDef: { colours } }: Game,
+  num: number,
+  x: number,
+  yStart: number
+): Cell[] {
+  return Array.from({ length: num }, (_, yIndex) => {
+    const y = colStats[x].offsets[yStart + yIndex]
+    return {
+      type: 'colour',
+      id: nextId(),
+      x,
+      y,
+      variant: prng.nextOf(colours),
+    }
+  })
+}
+
+export function doFall(game: Game) {
+  const { colStats } = game
+  return (column: CellSpace[], x: number): Cell[] => {
+    return column.filter(isCell).map((cell, yIndex) => {
+      const colStat = colStats[x]
+      const y = colStat.offsets[yIndex]
+
+      return {
+        ...cell,
+        y,
+      }
+    })
+  }
+}
+
+export function addNewCells(game: Game) {
+  return (column: CellSpace[], x: number): CellSpace[] => {
+    const totalExpected = game.colStats[x].length * 2
+    const missing = totalExpected - column.length
+    //const spare = game.colStats[x].length - missing
+    const yStart = totalExpected - missing
+
+    if (missing > 0) {
+      const newCells = createColumn(game, missing, x, yStart)
+      return [...column, ...newCells]
+    } else {
+      return column
+    }
+  }
+}
+
+export function mergeScores(scoresList: Scores[]) {
+  return scoresList.reduce((total, score) => {
+    Object.entries(score).forEach(([variant, count]) => {
+      total[variant] = (total[variant] || 0) + count
+    })
+    return total
+  })
+}
+
+export function applyScore(game: Game, scoreChange: Scores): Game {
+  const { currentScore } = game
+  const newScores = Object.entries(currentScore).map(([variant, count]) => {
+    if (scoreChange[variant] > 0) {
+      const newScore = Math.max(count - scoreChange[variant], 0)
+      return [variant, newScore]
+    }
+    return [variant, count]
+  })
+  return {
+    ...game,
+    currentScore: Object.fromEntries(newScores),
+  }
+}
+
+export function createGames(
+  columnsList: CellSpace[][][],
+  game: Game,
+  then?: (game: Game) => Game
+): Game {
+  const [columns, ...tail] = columnsList
+
+  const res = {
+    ...game,
+    movesLeft: game.movesLeft - 1,
+    columns,
+    nextGame:
+      tail.length === 0
+        ? then?.({ ...game, columns })
+        : createGames(tail, game),
+  }
+
+  return res
+}
+
+export function applyPopEffect(
+  game: Game,
+  columns: CellSpace[][],
+  poppingCells: Cell[]
+): CellSpace[][] {
+  const allCells = columns.flat()
+  const pops = new Map<number, Cell>()
+  poppingCells.forEach((poppingCell) => {
+    cardinalNeighbourIds
+      .map(([x, y]) =>
+        allCells.find(
+          (c) =>
+            poppingCell.y + y < game.levelDef.height &&
+            c !== null &&
+            c.x === poppingCell.x + x &&
+            c.y === poppingCell.y + y
+        )
+      )
+      .filter((cell) => cell?.onNeighbourPop)
+      .filter(notUndefinedOrNull)
+      .forEach((cell) => pops.set(cell.id, poppingCell))
+  })
+
+  //console.log('pops:', pops)
+  const withPopEffect = columns.map((column) =>
+    column.map((cell) => {
+      if (cell && pops.has(cell.id) && cell.onNeighbourPop) {
+        const poppingCell = pops.get(cell.id) as Cell
+        return cell.onNeighbourPop(game, cell, poppingCell)
+      } else {
+        return cell
+      }
+    })
+  )
+
+  return withPopEffect
+}

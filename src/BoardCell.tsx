@@ -1,5 +1,5 @@
 import './BoardCell.scss'
-import { Cell } from './types'
+import { Cell, Game } from './types'
 
 const cellChar: { [key: string]: string } = {
   red: 'ᐤ',
@@ -29,16 +29,19 @@ const cellChar: { [key: string]: string } = {
 }
 
 interface BoardCellArgs {
+  game: Game
   cell: Cell
   onClick?: () => void
+  onMouseOver?: () => void
 }
 
-export function BoardCell({ cell, onClick }: BoardCellArgs) {
+export function BoardCell({ game, cell, onClick, onMouseOver }: BoardCellArgs) {
   const { variant } = cell
   const char = cellChar[variant] || variant
 
-  const style = {
+  const style: React.CSSProperties = {
     bottom: `${cell.y * 41}px`,
+    visibility: cell.y >= game.levelDef.height ? 'hidden' : 'visible',
   }
 
   return (
@@ -49,6 +52,7 @@ export function BoardCell({ cell, onClick }: BoardCellArgs) {
       }
       style={style}
       onClick={onClick}
+      onMouseOver={onMouseOver}
     >
       <svg viewBox="0 0 20 20">
         <text x="10" y="10">

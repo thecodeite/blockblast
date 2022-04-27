@@ -8,6 +8,12 @@ import level6 from './level6'
 import level7 from './level7'
 import level8 from './level8'
 import level9 from './level9'
+import level10 from './level10'
+import level11 from './level11'
+import level12 from './level12'
+import level13 from './level13'
+import level14 from './level14'
+import level15 from './level15'
 
 const levels: { [key: string]: LevelDef } = {
   level1,
@@ -19,6 +25,12 @@ const levels: { [key: string]: LevelDef } = {
   level7,
   level8,
   level9,
+  level10,
+  level11,
+  level12,
+  level13,
+  level14,
+  level15,
 }
 
 export default levels

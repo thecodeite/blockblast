@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { tap } from './game'
+import { Prng } from './Prng'
 import { Cell, Game } from './types'
 
 interface BoardArgs {
@@ -12,23 +13,12 @@ interface BoardArgs {
 
 export function Board({ game, setGame }: BoardArgs) {
   const { columns } = game
+  const [debug, setDebug] = useState<any>()
 
   const click = (cell: Cell) => () => {
-    setGame((oldGame: Game) => tap(oldGame, cell))
+    const nextGame = tap(game, cell)
+    setGame(nextGame)
   }
-
-  useEffect(() => {
-    if (game.nextGame) {
-      const nextGame = game.nextGame
-      const h = setTimeout(() => {
-        console.log(`tick`)
-        setGame(nextGame)
-      }, 100)
-      return () => clearTimeout(h)
-    } else {
-      console.log(`done`)
-    }
-  }, [game])
 
   const style = {
     height: `calc(${game.levelDef.height} * 42px)`,
@@ -45,12 +35,15 @@ export function Board({ game, setGame }: BoardArgs) {
               <BoardCell
                 key={`cell_${cell.id}`}
                 cell={cell}
+                game={game}
                 onClick={click(cell)}
+                onMouseOver={() => setDebug(cell)}
               />
             )
           )}
         </div>
       ))}
+      <pre>{JSON.stringify(debug, null, '  ')}</pre>
     </div>
   )
 }

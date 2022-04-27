@@ -3,7 +3,7 @@ export interface LevelDef {
   width: number
   initial: string[]
   colours: string[]
-  win: { [key: string]: number }
+  win: Scores
   moves: number
 
   challanges?: { [key: string]: string }
@@ -35,24 +35,26 @@ export interface TapCell extends Cell {
 
 type CellSpace = RemoveCell | Cell | null
 
+export type TapStep = { colls: CellSpace[][]; scores: Scores }
+export type TapStep2 = { collsSets: CellSpace[][][]; scores: Scores }
+
 export interface ColStat {
   length: number
   offsets: number[]
 }
 
-interface Score {
-  name: string
-  left: number
-}
+type Scores = { [key: string]: number }
 export interface Game {
+  levelString: string
   prng: Prng
   levelDef: LevelDef
   columns: CellSpace[][]
   nextGame?: Game
   colStats: ColStat[]
 
-  score: Score[]
+  currentScore: { [key: string]: number }
   movesLeft: number
+  hasWon?: true
 }
 
 export interface CellColumn {
