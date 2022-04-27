@@ -17,20 +17,12 @@ import {
   mergeScores,
   nextId,
 } from './game.utils'
-import {
-  Cell,
-  CellFilter,
-  CellSpace,
-  Game,
-  Scores,
-  TapCell,
-  TapStep,
-} from './types'
+import { Cell, CellFilter, Game, TapStep } from './types'
 
 function doMulti(
   game: Game,
   neighboursSet: Set<Cell>,
-  columns: CellSpace[][],
+  columns: Cell[][],
   makeToy: (cell: Cell) => Cell
 ) {
   const neighbours = [...neighboursSet]
@@ -86,15 +78,18 @@ function doMulti(
 
 function tapToy(
   game: Game,
-  columns: CellSpace[][],
-  on: Cell,
+  columns: Cell[][],
+  onOrig: Cell,
   isHuman: boolean
 ): TapStep[] {
-  if (on.tap) return []
+  if (onOrig.tap) return []
+
+  const on = columns.flat().find((cell) => cell.id === onOrig.id)
+  if (!on) return []
 
   let variant = on.variant
   const neighbours = isHuman
-    ? findNeighbours(on, { ...game, columns })
+    ? findNeighbours(on, columns, game.levelDef)
     : new Set([on])
 
   if (neighbours.size > 1) {
@@ -142,9 +137,7 @@ function tapToy(
   } else if (variant === 'cross') {
     filter = (column) =>
       column.map((cell) =>
-        cell &&
-        cell.y < game.levelDef.height &&
-        (on.x === cell.x || on.y === cell.y)
+        cell.y < game.levelDef.height && (on.x === cell.x || on.y === cell.y)
           ? toRemove(cell)
           : cell
       )
@@ -155,9 +148,7 @@ function tapToy(
       return Math.abs(dx) <= 1 || Math.abs(dy) <= 1
     }
     filter = (column) =>
-      column.map(
-        (cell) => cell && (near(cell.x, cell.y) ? toRemove(cell) : cell)
-      )
+      column.map((cell) => (near(cell.x, cell.y) ? toRemove(cell) : cell))
   } else if (variant === 'bomb' || variant === 'mega_bomb') {
     const size = variant === 'bomb' ? 1 : 3
     const near = (x: number, y: number) => {
@@ -166,16 +157,14 @@ function tapToy(
       return Math.abs(dx) <= size && Math.abs(dy) <= size
     }
     filter = (column) =>
-      column.map(
-        (cell) => cell && (near(cell.x, cell.y) ? toRemove(cell) : cell)
-      )
+      column.map((cell) => (near(cell.x, cell.y) ? toRemove(cell) : cell))
   } else if (variant.startsWith('cube_')) {
     const burnColour = on.variant.substring('cube_'.length)
 
     filter = (column) =>
       column.map((cell) =>
         cell === on ||
-        (cell && cell.y < game.levelDef.height && cell?.variant === burnColour)
+        (cell.y < game.levelDef.height && cell?.variant === burnColour)
           ? toRemove(cell)
           : cell
       )
@@ -183,7 +172,7 @@ function tapToy(
   } else if (variant === 'nuke') {
     filter = (column) =>
       column.map((cell) =>
-        cell && cell.y < game.levelDef.height ? toRemove(cell) : cell
+        cell.y < game.levelDef.height ? toRemove(cell) : cell
       )
   } else if (variant === 'multi_rotors') {
     const makeRotor = (cell: Cell) =>
@@ -208,49 +197,54 @@ function tapToy(
   } else {
     return []
   }
-  // const toRemove = columns.map(filter)
+  const withTappedRemoved = columns.map(removeCells([...neighbours]))
+  const withTappedNulled = withTappedRemoved.map(doRemove)
 
-  const withRemove = columns.map(filter)
+  const withToyActivated = withTappedNulled.map(filter)
 
   let withPopEffect = undefined
   if (doPop) {
     withPopEffect = applyPopEffect(
       game,
-      withRemove,
-      withRemove
+      withToyActivated,
+      withToyActivated
         .flat()
         .filter((cell) => cell?.remove)
         .filter(notUndefinedOrNull)
     )
   }
 
-  const withTapped = (withPopEffect || withRemove).map(removeCell(on))
+  const withTapped = (withPopEffect || withToyActivated).map(removeCell(on))
 
-  const toysToTap = withTapped
+  const toysToTap: Cell[] = withTapped
     .flatMap((col) =>
       col.map((cell) => {
         if (cell?.tap === true) {
-          const remove = cell as TapCell
-          return remove.original
+          return {
+            ...cell,
+            tap: undefined,
+          } as Cell
         }
         return undefined
       })
     )
     .filter(notUndefined)
+  console.log('toysToTap:', toysToTap)
 
   const scoreChange = calcScore(withTapped)
   const withNull = withTapped.map(doRemove)
 
   const moves: TapStep[] = [
-    { colls: withRemove, scores: scoreChange },
+    { colls: withTappedRemoved, scores: {} },
+    { colls: withToyActivated, scores: scoreChange },
     withPopEffect ? { colls: withPopEffect, scores: {} } : undefined,
-    { colls: withTapped, scores: {} },
     { colls: withNull, scores: {} },
   ].filter(notUndefined)
+
   if (toysToTap.length > 0) {
     console.log('toysToTap:', toysToTap.length)
-    return toysToTap.reduce((p, c) => {
-      const res = tapToy(game, p[p.length - 1].colls, c, false)
+    return toysToTap.reduce((p, toy) => {
+      const res = tapToy(game, p[p.length - 1].colls, toy, false)
       return [...p, ...res]
     }, moves)
   }
@@ -264,6 +258,7 @@ export function tapFirstToy(game: Game, on: Cell): Game {
   const moves = steps.map((step) => step.colls)
 
   const last = steps[steps.length - 1]
+  console.log('steps:', steps)
   const withFall = last.colls.map(doFall(game)).map(addNewCells(game))
 
   const scoreChange = mergeScores(scoresList)

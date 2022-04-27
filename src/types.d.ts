@@ -2,6 +2,7 @@ export interface LevelDef {
   height: number
   width: number
   initial: string[]
+  overlay?: string[]
   colours: string[]
   win: Scores
   moves: number
@@ -10,34 +11,28 @@ export interface LevelDef {
 }
 
 export interface Cell {
-  remove?: boolean
-  tap?: boolean
+  remove?: true
+  tap?: true
   tapped?: true
-  type: 'colour' | 'toy' | 'challange'
+  type: 'null' | 'colour' | 'toy' | 'challange'
   id: number
   variant: string
   x: number
   y: number
 
   onDestroy?: (cell: Cell) => Cell | RemoveCell
-  onTick?: (game: Game, cell: Cell) => Cell | null
-  onNeighbourPop?: (game: Game, cell: Cell, neighbour: Cell) => Cell | null
+  onTick?: (game: Game, cell: Cell) => Cell
+  onNeighbourPop?: (game: Game, cell: Cell, neighbour: Cell) => Cell
 }
 
-export interface RemoveCell extends Cell {
-  remove: true
-  original: Cell
+export type TapStep = { colls: Cell[][]; scores: Scores }
+export type TapStep2 = { collsSets: Cell[][][]; scores: Scores }
+
+type Overlay = {
+  x: number
+  y: number
+  isBubble?: true
 }
-export interface TapCell extends Cell {
-  tap: true
-  original: Cell
-}
-
-type CellSpace = RemoveCell | Cell | null
-
-export type TapStep = { colls: CellSpace[][]; scores: Scores }
-export type TapStep2 = { collsSets: CellSpace[][][]; scores: Scores }
-
 export interface ColStat {
   length: number
   offsets: number[]
@@ -48,7 +43,8 @@ export interface Game {
   levelString: string
   prng: Prng
   levelDef: LevelDef
-  columns: CellSpace[][]
+  columns: Cell[][]
+  overlay: Overlay[][]
   nextGame?: Game
   colStats: ColStat[]
 

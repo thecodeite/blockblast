@@ -1,22 +1,50 @@
-export const levelBombs = [
-  '.........',
-  '.........',
-  '.........',
-  '.........',
-  '.........',
-  '.........',
-  '.........',
-  '.........',
-  '.........',
+import { LevelDef } from '../types'
+
+const manyRotor = [
   'rrrrrrrrr',
-  'bbbbbbbbb',
+  'bgbbgbbgb',
   'rrrrrrrrr',
   'rrrrrrrrr',
   'bbbbbbbbb',
-  '↔↔↔↔↔↔↔r↔',
+  // '↔↔↔↔↔↔↔r↔',
   'yyyyyyyyy',
   'yyyyyyyy↕',
-  'B↕yyyyyy↔',
+  'G↕yyyyyy↔',
 ]
 
-export default levelBombs
+const twoRotor = [
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '↔.......↕',
+]
+
+const bombLine = [
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '.........',
+  '↕........',
+  '.........',
+  '*********',
+]
+
+export const level: LevelDef = {
+  height: 9,
+  width: 9,
+  initial: bombLine,
+  colours: ['red', 'green'],
+  win: {
+    red: 999,
+  },
+  moves: 999,
+}
+
+export default level

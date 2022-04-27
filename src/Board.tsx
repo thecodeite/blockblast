@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { tap } from './game'
-import { Prng } from './Prng'
 import { Cell, Game } from './types'
 
 interface BoardArgs {
@@ -24,6 +23,12 @@ export function Board({ game, setGame }: BoardArgs) {
     height: `calc(${game.levelDef.height} * 42px)`,
   }
 
+  const overlayAt = (cell: Cell) => {
+    //if (!cell)
+    return { x: 0, y: 0 }
+    //game.overlay[cell.y][cell.x]
+  }
+
   return (
     <div className="Board" style={style}>
       {columns.map((column, i) => (
@@ -35,6 +40,7 @@ export function Board({ game, setGame }: BoardArgs) {
               <BoardCell
                 key={`cell_${cell.id}`}
                 cell={cell}
+                overlay={overlayAt(cell)}
                 game={game}
                 onClick={click(cell)}
                 onMouseOver={() => setDebug(cell)}

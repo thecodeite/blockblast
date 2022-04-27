@@ -1,5 +1,5 @@
 import './BoardCell.scss'
-import { Cell, Game } from './types'
+import { Cell, Game, Overlay } from './types'
 
 const cellChar: { [key: string]: string } = {
   red: 'ᐤ',
@@ -31,17 +31,37 @@ const cellChar: { [key: string]: string } = {
 interface BoardCellArgs {
   game: Game
   cell: Cell
+  overlay: Overlay
   onClick?: () => void
   onMouseOver?: () => void
 }
 
-export function BoardCell({ game, cell, onClick, onMouseOver }: BoardCellArgs) {
-  const { variant } = cell
+export function BoardCell({
+  game,
+  cell,
+  overlay,
+  onClick,
+  onMouseOver,
+}: BoardCellArgs) {
+  const { type, variant } = cell
   const char = cellChar[variant] || variant
 
   const style: React.CSSProperties = {
     bottom: `${cell.y * 41}px`,
     visibility: cell.y >= game.levelDef.height ? 'hidden' : 'visible',
+  }
+
+  if (type === 'null') {
+    return (
+      <div
+        className={
+          `BoardCell BoardCell_${variant}` +
+          (cell.remove ? ' BoardCell_remove' : '')
+        }
+        style={style}
+        onMouseOver={onMouseOver}
+      ></div>
+    )
   }
 
   return (

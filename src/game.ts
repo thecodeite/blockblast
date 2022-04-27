@@ -1,19 +1,11 @@
 // import 'core-js/actual/array/group-by'
-import {
-  calcScore,
-  doRemove,
-  isCell,
-  notUndefined,
-  notUndefinedOrNull,
-  toRemove,
-} from './cellUtils'
+import { calcScore, doRemove, notUndefined, toRemove } from './cellUtils'
 import { makeChallange } from './challanges.ts/challanges'
 import { tapFirstToy } from './game.tapToy'
 import {
   addNewCells,
   applyPopEffect,
   applyScore,
-  cardinalNeighbourIds,
   createGames,
   doFall,
   findNeighbours,
@@ -22,16 +14,7 @@ import {
 import level0 from './levels/level0'
 import levels from './levels/levels'
 import { Prng } from './Prng'
-import {
-  Cell,
-  CellFilter,
-  CellSpace,
-  Game,
-  LevelDef,
-  RemoveCell,
-  Scores,
-  TapCell,
-} from './types'
+import { Cell, Game, LevelDef, Overlay } from './types'
 
 export function pivotArray(initial: string[], width: number): string[][] {
   const stringCols = Array.from({ length: width }, (_, x) => {
@@ -41,7 +24,7 @@ export function pivotArray(initial: string[], width: number): string[][] {
   return stringCols
 }
 
-export type CreateCellFunc = (ch: string, x: number, y: number) => Cell | null
+export type CreateCellFunc = (ch: string, x: number, y: number) => Cell
 
 const colourSymbols: { [key: string]: string } = {
   r: 'red',
@@ -91,6 +74,10 @@ export function createGame(levelString: string): Game {
     return levelDef.initial.reduce((p, c) => p + c[x], '')
   })
 
+  const stringOverlay = Array.from({ length: levelDef.width }, (_, x) => {
+    return (levelDef.overlay || []).reduce((p, c) => p + c[x], '')
+  })
+
   const colStats = stringCols.map((str) => {
     const offsets = createOffsets(str)
     return {
@@ -99,7 +86,7 @@ export function createGame(levelString: string): Game {
     }
   })
 
-  const columns: CellSpace[][] = stringCols.map((str, x) => {
+  const columns: Cell[][] = stringCols.map((str, x) => {
     const colStat = colStats[x]
     return str
       .split('')
@@ -137,12 +124,26 @@ export function createGame(levelString: string): Game {
       })
   })
 
+  const overlay = stringOverlay.map((str, x) => {
+    return str
+      .split('')
+      .reverse()
+      .map((ch, y) => {
+        return {
+          x,
+          y,
+          isBubble: ch === '0',
+        } as Overlay
+      })
+  })
+
   const game: Game = {
     levelString,
     prng,
     levelDef,
     colStats,
     columns,
+    overlay,
     currentScore: { ...levelDef.win },
     movesLeft: levelDef.moves,
   }
@@ -210,7 +211,7 @@ function doTick(game: Game): Game | undefined {
 }
 
 export function tapColour(game: Game, on: Cell): Game {
-  const neighbours = findNeighbours(on, game)
+  const neighbours = findNeighbours(on, game.columns, game.levelDef)
   let toy: Cell | undefined = undefined
   const size = neighbours.size
 
@@ -233,7 +234,7 @@ export function tapColour(game: Game, on: Cell): Game {
     }
   }
 
-  const addToyAt = (column: CellSpace[], x: number): CellSpace[] => {
+  const addToyAt = (column: Cell[], x: number): Cell[] => {
     if (toy === undefined) return column
     const t = toy
     const cols = column.map((cell, y) => (t.x === x && t.y === y ? t : cell))
@@ -244,7 +245,7 @@ export function tapColour(game: Game, on: Cell): Game {
 
   const neighboursIds = [...neighbours].map((x) => x.id)
 
-  const removeNeighbours = (cell: CellSpace) =>
+  const removeNeighbours = (cell: Cell) =>
     cell && neighboursIds.includes(cell.id) ? toRemove(cell) : cell
   const withRemove = withPopEffect.map((column) => column.map(removeNeighbours))
 

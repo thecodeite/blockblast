@@ -6,7 +6,7 @@ export function makeChallange(
   id: number,
   x: number,
   y: number
-): Cell | null {
+): Cell {
   if (name === 'beachball') {
     const cell: Cell = {
       id,
@@ -55,6 +55,12 @@ export function makeChallange(
     }
     return cell
   } else {
-    return null
+    return {
+      type: 'null',
+      id,
+      variant: 'null',
+      x,
+      y,
+    }
   }
 }

@@ -1,4 +1,7 @@
 import { LevelDef } from '../types'
+
+import levelRotors from './level-rotors'
+
 import level1 from './level1'
 import level2 from './level2'
 import level3 from './level3'
@@ -14,8 +17,10 @@ import level12 from './level12'
 import level13 from './level13'
 import level14 from './level14'
 import level15 from './level15'
+import level16 from './level16'
 
 const levels: { [key: string]: LevelDef } = {
+  'level-rotors': levelRotors,
   level1,
   level2,
   level3,
@@ -31,6 +36,7 @@ const levels: { [key: string]: LevelDef } = {
   level13,
   level14,
   level15,
+  level16,
 }
 
 export default levels
