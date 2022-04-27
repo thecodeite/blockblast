@@ -1,5 +1,13 @@
-import { isCell, notUndefinedOrNull, toRemove } from './cellUtils'
-import { Cell, Game, LevelDef, Scores, TapStep, TapStep2 } from './types'
+import { isCell, notUndefined, notUndefinedOrNull, toRemove } from './cellUtils'
+import {
+  Cell,
+  Game,
+  LevelDef,
+  Overlay,
+  Scores,
+  TapStep,
+  TapStep2,
+} from './types'
 
 let _nextId = 0
 
@@ -131,24 +139,43 @@ export function applyScore(game: Game, scoreChange: Scores): Game {
   }
 }
 
-export function createGames(
-  columnsList: Cell[][][],
-  game: Game,
-  then?: (game: Game) => Game
-): Game {
+export function createGames(columnsList: Cell[][][], game: Game): Game {
   const [columns, ...tail] = columnsList
 
-  const res = {
+  const overlay = calcNewOverlay(game, columns)
+  const nextGame = {
     ...game,
+    overlay,
     movesLeft: game.movesLeft - 1,
     columns,
     nextGame:
-      tail.length === 0
-        ? then?.({ ...game, columns })
-        : createGames(tail, game),
+      tail.length === 0 ? undefined : createGames(tail, { ...game, overlay }),
   }
 
-  return res
+  return nextGame
+}
+
+function calcNewOverlay(
+  game: Game,
+  withRemove: Cell[][]
+): { [key: string]: Overlay } {
+  const removes = withRemove
+    .flat()
+    .filter(
+      (c) => (c.remove || c.tap) && (c.type === 'colour' || c.type === 'toy')
+    )
+  const overlay = { ...game.overlay }
+  removes.forEach((cell) => {
+    const key = `${cell.x},${cell.y}`
+    if (overlay[key]?.isBubble) {
+      overlay[key] = {
+        ...overlay[key],
+        isBubble: undefined,
+      }
+    }
+  })
+
+  return overlay
 }
 
 export function applyPopEffect(
@@ -187,4 +214,30 @@ export function applyPopEffect(
   )
 
   return withPopEffect
+}
+
+export function calcOverlayScore(
+  game: Game,
+  ...columnSets: Cell[][][]
+): Scores {
+  const count = columnSets.reduce((p, colls) => {
+    const removes = colls
+      .flat()
+      .filter(
+        (c) => (c.remove || c.tap) && (c.type === 'colour' || c.type === 'toy')
+      )
+    const overlaysPopped = removes
+      .map((cell) => game.overlay[`${cell.x},${cell.y}`])
+      .filter(notUndefined)
+      .filter((o) => o.isBubble).length
+    return p + overlaysPopped
+  }, 0)
+
+  if (count > 0) {
+    return {
+      bubble: count,
+    }
+  } else {
+    return {}
+  }
 }

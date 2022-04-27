@@ -44,7 +44,7 @@ export interface Game {
   prng: Prng
   levelDef: LevelDef
   columns: Cell[][]
-  overlay: Overlay[][]
+  overlay: { [key: string]: Overlay }
   nextGame?: Game
   colStats: ColStat[]
 

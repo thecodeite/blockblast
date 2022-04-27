@@ -31,7 +31,7 @@ const cellChar: { [key: string]: string } = {
 interface BoardCellArgs {
   game: Game
   cell: Cell
-  overlay: Overlay
+  overlay: Overlay | undefined
   onClick?: () => void
   onMouseOver?: () => void
 }
@@ -60,7 +60,11 @@ export function BoardCell({
         }
         style={style}
         onMouseOver={onMouseOver}
-      ></div>
+      >
+        {overlay?.isBubble ? (
+          <div className="BoardCell-overlay"></div>
+        ) : undefined}
+      </div>
     )
   }
 
@@ -79,6 +83,9 @@ export function BoardCell({
           {char}
         </text>
       </svg>
+      {overlay?.isBubble ? (
+        <div className="BoardCell-overlay"></div>
+      ) : undefined}
     </div>
   )
 }

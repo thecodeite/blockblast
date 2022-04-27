@@ -6,15 +6,17 @@ import {
   addNewCells,
   applyPopEffect,
   applyScore,
+  calcOverlayScore,
   createGames,
   doFall,
   findNeighbours,
+  mergeScores,
   nextId,
 } from './game.utils'
 import level0 from './levels/level0'
 import levels from './levels/levels'
 import { Prng } from './Prng'
-import { Cell, Game, LevelDef, Overlay } from './types'
+import { Cell, Game, LevelDef, Overlay, Scores } from './types'
 
 export function pivotArray(initial: string[], width: number): string[][] {
   const stringCols = Array.from({ length: width }, (_, x) => {
@@ -124,18 +126,24 @@ export function createGame(levelString: string): Game {
       })
   })
 
-  const overlay = stringOverlay.map((str, x) => {
-    return str
-      .split('')
-      .reverse()
-      .map((ch, y) => {
-        return {
-          x,
-          y,
-          isBubble: ch === '0',
-        } as Overlay
-      })
-  })
+  const overlayEntries = stringOverlay
+    .map((str, x) => {
+      return str
+        .split('')
+        .reverse()
+        .map((ch, y) => {
+          return {
+            x,
+            y,
+            isBubble: ch === '0',
+          } as Overlay
+        })
+    })
+    .flat()
+    .map((o) => [`${o.x},${o.y}`, o])
+  const overlay = Object.fromEntries(overlayEntries) as {
+    [key: string]: Overlay
+  }
 
   const game: Game = {
     levelString,
@@ -207,7 +215,12 @@ function doTick(game: Game): Game | undefined {
   const withNull = withRemove.map(doRemove)
   const withFall = withNull.map(doFall(game)).map(addNewCells(game))
 
-  return createGames([withRemove, withNull, withFall], gameWithScore)
+  const games = createGames([withRemove, withNull, withFall], gameWithScore)
+  let lastGame = games
+  while (lastGame.nextGame) lastGame = lastGame.nextGame
+  lastGame.nextGame = doTick(lastGame)
+
+  return games
 }
 
 export function tapColour(game: Game, on: Cell): Game {
@@ -249,7 +262,10 @@ export function tapColour(game: Game, on: Cell): Game {
     cell && neighboursIds.includes(cell.id) ? toRemove(cell) : cell
   const withRemove = withPopEffect.map((column) => column.map(removeNeighbours))
 
-  const scoreChange = calcScore(withRemove)
+  const popScoreChange = calcScore(withRemove)
+  const overlayScoreChange = calcOverlayScore(game, withRemove)
+  const scoreChange = mergeScores([popScoreChange, overlayScoreChange])
+
   const gameWithScore = applyScore(game, scoreChange)
 
   const withNull = withRemove.map(doRemove)

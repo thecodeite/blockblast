@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import './Board.scss'
 import { BoardCell, NullBoardCell } from './BoardCell'
 import { tap } from './game'
-import { Cell, Game } from './types'
+import { Cell, Game, Overlay } from './types'
 
 interface BoardArgs {
   game: Game
@@ -23,10 +23,9 @@ export function Board({ game, setGame }: BoardArgs) {
     height: `calc(${game.levelDef.height} * 42px)`,
   }
 
-  const overlayAt = (cell: Cell) => {
-    //if (!cell)
-    return { x: 0, y: 0 }
-    //game.overlay[cell.y][cell.x]
+  const overlayAt: (cell: Cell) => Overlay | undefined = (cell: Cell) => {
+    const overlay = game.overlay[`${cell.x},${cell.y}`]
+    return overlay
   }
 
   return (

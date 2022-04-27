@@ -11,6 +11,7 @@ import {
   addNewCells,
   applyPopEffect,
   applyScore,
+  calcOverlayScore,
   createGames,
   doFall,
   findNeighbours,
@@ -231,7 +232,13 @@ function tapToy(
     .filter(notUndefined)
   console.log('toysToTap:', toysToTap)
 
-  const scoreChange = calcScore(withTapped)
+  const popScoreChange = calcScore(withTapped)
+  const overlayScoreChange = calcOverlayScore(
+    game,
+    withTappedRemoved,
+    withTapped
+  )
+  const scoreChange = mergeScores([popScoreChange, overlayScoreChange])
   const withNull = withTapped.map(doRemove)
 
   const moves: TapStep[] = [
