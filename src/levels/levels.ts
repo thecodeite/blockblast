@@ -32,6 +32,16 @@ import level27 from './level27'
 import level28 from './level28'
 import level29 from './level29'
 import level30 from './level30'
+import level31 from './level31'
+import level32 from './level32'
+import level33 from './level33'
+import level34 from './level34'
+import level35 from './level35'
+import level36 from './level36'
+import level37 from './level37'
+import level38 from './level38'
+import level39 from './level39'
+import level40 from './level40'
 
 const levels: { [key: string]: LevelDef } = {
   'level-rotors': levelRotors,
@@ -65,6 +75,16 @@ const levels: { [key: string]: LevelDef } = {
   level28,
   level29,
   level30,
+  level31,
+  level32,
+  level33,
+  level34,
+  level35,
+  level36,
+  level37,
+  level38,
+  level39,
+  level40,
 }
 
 export default levels

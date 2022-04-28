@@ -21,6 +21,7 @@ export interface Cell {
   y: number
 
   noGravity?: true
+  child?: Cell
 
   onDestroy?: (cell: Cell) => Cell | RemoveCell
   onTick?: (game: Game, cell: Cell) => Cell

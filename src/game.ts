@@ -97,7 +97,7 @@ export function createGame(levelString: string): Game {
       .map((ch, yIndex) => {
         const y = colStat.offsets[yIndex]
         if (levelDef.challanges?.[ch]) {
-          return makeChallange(levelDef.challanges[ch], nextId(), x, y)
+          return makeChallange(levelDef.challanges[ch], nextId, x, y)
         } else if (colourSymbols[ch]) {
           return {
             type: 'colour',

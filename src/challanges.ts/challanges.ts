@@ -3,13 +3,13 @@ import { Cell, Game } from '../types'
 
 export function makeChallange(
   name: string,
-  id: number,
+  nextId: () => number,
   x: number,
   y: number
 ): Cell {
   if (name === 'beachball') {
     const cell: Cell = {
-      id,
+      id: nextId(),
       x,
       y,
       type: 'challange',
@@ -23,7 +23,7 @@ export function makeChallange(
     return cell
   } else if (name.startsWith('weight_')) {
     const cell: Cell = {
-      id,
+      id: nextId(),
       x,
       y,
       type: 'challange',
@@ -56,7 +56,7 @@ export function makeChallange(
     return cell
   } else if (name.startsWith('block_')) {
     return {
-      id,
+      id: nextId(),
       x,
       y,
       type: 'challange',
@@ -67,10 +67,28 @@ export function makeChallange(
         return toRemove(cell)
       },
     } as Cell
+  } else if (name.startsWith('cage_')) {
+    return {
+      id: nextId(),
+      x,
+      y,
+      type: 'challange',
+      variant: 'cage',
+      noGravity: true,
+
+      child: makeChallange(name.substring('cage_'.length), nextId, x, y),
+
+      onNeighbourPop: (game: Game, cell: Cell, neighbour: Cell) => {
+        return cell.child
+      },
+      onDestroy: (cell: Cell) => {
+        return cell.child
+      },
+    } as Cell
   } else {
     return {
       type: 'null',
-      id,
+      id: nextId(),
       variant: 'null',
       x,
       y,

@@ -28,12 +28,13 @@ const cellChar: { [key: string]: string } = {
   beachball: ' ',
 
   block_1: '_',
+  cage: '||||',
 }
 
 interface BoardCellArgs {
   game: Game
   cell: Cell
-  overlay: Overlay | undefined
+  overlay?: Overlay
   onClick?: () => void
   onMouseOver?: () => void
 }
@@ -45,7 +46,7 @@ export function BoardCell({
   onClick,
   onMouseOver,
 }: BoardCellArgs) {
-  const { type, variant } = cell
+  const { type, variant, child } = cell
   const char = cellChar[variant] || variant
 
   const style: React.CSSProperties = {
@@ -87,6 +88,11 @@ export function BoardCell({
       </svg>
       {overlay?.isBubble ? (
         <div className="BoardCell-overlay"></div>
+      ) : undefined}
+      {child ? (
+        <div className="BoardCell-child">
+          <BoardCell game={game} cell={{ ...child, y: 0 }} />
+        </div>
       ) : undefined}
     </div>
   )
