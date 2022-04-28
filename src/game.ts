@@ -174,10 +174,10 @@ export function createGame(levelString: string): Game {
 
   const withNewCells = columns.map(addNewCells(game))
 
-  return {
+  return countNeigbours({
     ...game,
     columns: withNewCells,
-  }
+  })
 }
 
 export function tap(game: Game, on: Cell): Game {
@@ -206,7 +206,103 @@ export function tap(game: Game, on: Cell): Game {
     endState.hasWon = hasWon
   }
 
+  while (lastGame.nextGame) lastGame = lastGame.nextGame
+  lastGame.nextGame = countNeigbours(lastGame)
+
   return afterTap
+}
+
+function countNeigbours(game: Game) {
+  let columns = game.columns.map((column) =>
+    column.map((cell) => {
+      if (cell.type !== 'colour' || cell.y >= game.levelDef.height) return cell
+      const neighbours = findNeighbours(cell, game.columns, game.levelDef)
+      return {
+        ...cell,
+        neighbours: neighbours.size,
+      }
+    })
+  )
+  const cells = columns
+    .flat()
+    .filter((cell) => cell.type === 'colour' && cell.y < game.levelDef.height)
+  const grouped = cells.filter((c) => c.neighbours && c.neighbours > 1)
+  if (grouped.length === 0) {
+    const totals = cells.reduce((acc, cell) => {
+      if (cell.type === 'colour') {
+        return {
+          ...acc,
+          [cell.variant]: (acc[cell.variant] || 0) + 1,
+        }
+      }
+      return acc
+    }, {} as Scores)
+    console.log('totals:', totals)
+    const groups = groupCells(cells.filter((c) => c.type === 'colour')).sort(
+      (a, b) => b.length - a.length
+    )
+    console.log('groups:', groups)
+    const idMapEntries = groups.flatMap((group) => {
+      const sortedColours = Object.entries(totals).sort(
+        ([_, a], [__, b]) => b - a
+      )
+      console.log('sortedColours:', sortedColours)
+      const colour = sortedColours[0][0]
+      totals[colour] -= group.length
+      return group.map((cell) => {
+        return [cell.id, colour]
+      })
+    })
+    console.log('totals:', totals)
+    const idMap = Object.fromEntries(idMapEntries)
+    console.log('idMap:', idMap)
+    const columnsMapped = game.columns.map((column) =>
+      column.map((cell) => {
+        const mapColour = idMap[cell.id]
+        if (!mapColour) {
+          return cell
+        } else {
+          return {
+            ...cell,
+            variant: mapColour,
+          }
+        }
+      })
+    )
+    return {
+      ...game,
+      columns: columnsMapped,
+    }
+  }
+
+  return {
+    ...game,
+    columns,
+  }
+}
+
+function groupCells(cells: Cell[]) {
+  const groups: Cell[][] = []
+
+  cells.forEach((cell) => {
+    const adjacent = groups.filter((group) => {
+      return group.some((groupCell) => areAdjacent(cell, groupCell))
+    })
+    if (adjacent.length === 0) {
+      groups.push([cell])
+    } else if (adjacent.length === 1) {
+      adjacent[0].push(cell)
+    } else throw new Error('not implemented')
+  })
+
+  return groups
+}
+
+function areAdjacent(cell1: Cell, cell2: Cell) {
+  return (
+    (cell1.x === cell2.x && Math.abs(cell1.y - cell2.y) === 1) ||
+    (cell1.y === cell2.y && Math.abs(cell1.x - cell2.x) === 1)
+  )
 }
 
 function doTick(game: Game): Game | undefined {
@@ -270,7 +366,7 @@ export function tapColour(game: Game, on: Cell): Game {
   const addToyAt = (column: Cell[], x: number): Cell[] => {
     if (toy === undefined) return column
     const t = toy
-    const cols = column.map((cell, y) => (t.x === x && t.y === y ? t : cell))
+    const cols = column.map((cell) => (t.x === x && t.y === cell.y ? t : cell))
     return cols
   }
 

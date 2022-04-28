@@ -1,4 +1,12 @@
 
 .Screen{
-  
+  display: flex;
+  flex-direction: column-reverse;
+
+  &-head {
+    display: flex;;
+  }
+  &-score {
+    width: 100px;
+  }
 }

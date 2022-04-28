@@ -12,13 +12,25 @@ export function Screen() {
   const { level } = useParams()
   const levelString = level || 'level1'
   const [game, setGame] = useState<Game>(() => createGame(levelString))
+  const [auto, setAuto] = useState(true)
 
   if (game.levelString !== levelString) {
     setGame(createGame(levelString))
   }
 
+  let count = 0
+  let tmpGame = game
+  while (tmpGame.nextGame) {
+    tmpGame = tmpGame.nextGame
+    count++
+  }
+
+  const doNext = () => {
+    if (game.nextGame) setGame(game.nextGame)
+  }
+
   useEffect(() => {
-    if (game?.nextGame) {
+    if (auto && game?.nextGame) {
       const nextGame = game.nextGame
       const h = setTimeout(() => {
         //console.log(`tick`)
@@ -40,21 +52,35 @@ export function Screen() {
 
   return (
     <div className="Screen">
+      <div className="Screen-head">
+        <fieldset className="Screen-score">
+          <legend>score</legend>
+          {Object.entries(game.currentScore).map(([name, count]) => {
+            return (
+              <div key={name}>
+                {name}:{count}
+              </div>
+            )
+          })}
+        </fieldset>
+        <fieldset className="Screen-moves">
+          <legend>moves</legend>
+          {game.movesLeft}
+        </fieldset>
+        <label>
+          Auto:
+          <input
+            type="checkbox"
+            checked={auto}
+            onChange={(e) => setAuto(e.target.checked)}
+          />
+        </label>
+        {game.nextGame && !auto ? (
+          <button onClick={() => doNext()}>Next</button>
+        ) : undefined}
+        {count}
+      </div>
       <Board {...{ game, setGame }} />
-      <fieldset>
-        <legend>score</legend>
-        {Object.entries(game.currentScore).map(([name, count]) => {
-          return (
-            <div key={name}>
-              {name}:{count}
-            </div>
-          )
-        })}
-      </fieldset>
-      <fieldset>
-        <legend>moves</legend>
-        {game.movesLeft}
-      </fieldset>
     </div>
   )
 }

@@ -13,6 +13,7 @@ const cellChar: { [key: string]: string } = {
   rotorV: '↕',
   bomb: '💣',
 
+  cube: '🧊',
   cube_red: '🧊',
   cube_yellow: '🧊',
   cube_green: '🧊',
@@ -46,12 +47,22 @@ export function BoardCell({
   onClick,
   onMouseOver,
 }: BoardCellArgs) {
-  const { type, variant, child } = cell
-  const char = cellChar[variant] || variant
+  const { type, variant, child, neighbours } = cell
+  let char = cellChar[variant] || variant
+  if (neighbours) {
+    if (neighbours >= 9) {
+      char = '[]'
+    } else if (neighbours >= 7) {
+      char = '*'
+    } else if (neighbours >= 5) {
+      char = '/'
+    }
+  }
 
   const style: React.CSSProperties = {
     bottom: `${cell.y * 41}px`,
-    visibility: cell.y >= game.levelDef.height ? 'hidden' : 'visible',
+    // visibility: cell.y >= game.levelDef.height ? 'hidden' : 'visible',
+    opacity: 0.5,
   }
 
   if (type === 'null') {

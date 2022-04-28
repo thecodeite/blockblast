@@ -1,6 +1,7 @@
 import { LevelDef } from '../types'
 
 import levelRotors from './level-rotors'
+import levelTest from './level-test'
 
 import level1 from './level1'
 import level2 from './level2'
@@ -42,9 +43,20 @@ import level37 from './level37'
 import level38 from './level38'
 import level39 from './level39'
 import level40 from './level40'
+import level41 from './level41'
+import level42 from './level42'
+import level43 from './level43'
+import level44 from './level44'
+import level45 from './level45'
+import level46 from './level46'
+import level47 from './level47'
+import level48 from './level48'
+import level49 from './level49'
+import level50 from './level50'
 
 const levels: { [key: string]: LevelDef } = {
   'level-rotors': levelRotors,
+  'level-test': levelTest,
   level1,
   level2,
   level3,
@@ -85,6 +97,16 @@ const levels: { [key: string]: LevelDef } = {
   level38,
   level39,
   level40,
+  level41,
+  level42,
+  level43,
+  level44,
+  level45,
+  level46,
+  level47,
+  level48,
+  level49,
+  level50,
 }
 
 export default levels

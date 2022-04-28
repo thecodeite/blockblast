@@ -19,6 +19,7 @@ export interface Cell {
   variant: string
   x: number
   y: number
+  neighbours?: number
 
   noGravity?: true
   child?: Cell
