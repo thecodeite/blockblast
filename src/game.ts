@@ -7,6 +7,7 @@ import {
   applyPopEffect,
   applyScore,
   calcOverlayScore,
+  cardinalNeighbourIds,
   createGames,
   doFall,
   findNeighbours,
@@ -97,7 +98,7 @@ export function createGame(levelString: string): Game {
       .map((ch, yIndex) => {
         const y = colStat.offsets[yIndex]
         if (levelDef.challanges?.[ch]) {
-          return makeChallange(levelDef.challanges[ch], nextId, x, y)
+          return makeChallange({ name: levelDef.challanges[ch], nextId, x, y })
         } else if (colourSymbols[ch]) {
           return {
             type: 'colour',
@@ -194,22 +195,73 @@ export function tap(game: Game, on: Cell): Game {
   }
 
   lastGame.nextGame = doTick(lastGame)
+  while (lastGame.nextGame) lastGame = lastGame.nextGame
 
-  const endState = lastGame.nextGame || lastGame
+  if (lastGame.currentScore['ice'] > 0) {
+    if (lastGame.currentScore['ice'] === game.currentScore['ice']) {
+      lastGame.nextGame = addSomeIce(lastGame)
+      while (lastGame.nextGame) lastGame = lastGame.nextGame
+    }
+  }
 
-  const hasWon = Object.entries(endState.currentScore).reduce(
+  const hasWon = Object.entries(lastGame.currentScore).reduce(
     (won, [_, count]) => won && count === 0,
     true
   )
   console.log('hasWon:', hasWon)
   if (hasWon) {
-    endState.hasWon = hasWon
+    lastGame.hasWon = hasWon
   }
 
-  while (lastGame.nextGame) lastGame = lastGame.nextGame
   lastGame.nextGame = countNeigbours(lastGame)
 
   return afterTap
+}
+
+function addSomeIce(game: Game): Game | undefined {
+  const allCells = game.columns.flat()
+  const iceCubes = allCells.filter((c) => c.variant === 'ice')
+  const viableNeibours = iceCubes
+    .flatMap((cube) => {
+      const cardinalNeighbours = cardinalNeighbourIds.map(([x, y]) =>
+        allCells.find(
+          (c) =>
+            cube.y + y < game.levelDef.height &&
+            c.x === cube.x + x &&
+            c.y === cube.y + y &&
+            (c.type === 'colour' || c.type === 'null')
+        )
+      )
+      return cardinalNeighbours
+    })
+    .filter(notUndefined)
+  if (viableNeibours.length > 0) {
+    const toIce = game.prng.nextOf(viableNeibours)
+    const columns = game.columns.map((col) =>
+      col.map((cell) => {
+        if (cell.id === toIce.id) {
+          return makeChallange({
+            name: 'ice',
+            x: cell.x,
+            y: cell.y,
+            nextId: () => cell.id,
+          })
+        } else {
+          return cell
+        }
+      })
+    )
+    return {
+      ...game,
+      currentScore: {
+        ...game.currentScore,
+        ice: iceCubes.length + 1,
+      },
+      columns,
+    }
+  } else {
+    return undefined
+  }
 }
 
 function countNeigbours(game: Game) {

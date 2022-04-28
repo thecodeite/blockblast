@@ -46,7 +46,6 @@ export function findNeighbours(
         allCells.find(
           (c) =>
             searchCell.y + y < levelDef.height &&
-            c !== null &&
             c.x === searchCell.x + x &&
             c.y === searchCell.y + y
         )

@@ -13,13 +13,13 @@ const cellChar: { [key: string]: string } = {
   rotorV: '↕',
   bomb: '💣',
 
-  cube: '🧊',
-  cube_red: '🧊',
-  cube_yellow: '🧊',
-  cube_green: '🧊',
-  cube_blue: '🧊',
-  cube_orange: '🧊',
-  cube_purple: '🧊',
+  cube: '🕋 ',
+  cube_red: '🕋 ',
+  cube_yellow: '🕋 ',
+  cube_green: '🕋 ',
+  cube_blue: '🕋 ',
+  cube_orange: '🕋 ',
+  cube_purple: '🕋 ',
 
   weight_1: 'w1',
   weight_2: 'w2',
@@ -30,6 +30,7 @@ const cellChar: { [key: string]: string } = {
 
   block_1: '_',
   cage: '||||',
+  ice: '🧊',
 }
 
 interface BoardCellArgs {

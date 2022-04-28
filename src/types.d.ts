@@ -1,3 +1,4 @@
+import type { Prng } from './Prng'
 export interface LevelDef {
   height: number
   width: number

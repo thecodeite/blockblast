@@ -1,43 +1,27 @@
 import { LevelDef } from '../types'
 
 export const level: LevelDef = {
-  height: 9,
-  width: 9,
+  height: 8,
+  width: 7,
   initial: [
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-  ],
-  overlay: [
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
-    '.........',
+    '.......',
+    '.......',
+    '.......',
+    '_....._',
+    '_iiiii_',
+    'iiiiiii',
+    'iiiiiii',
+    'iiiiiii',
   ],
   challanges: {
-    '0': 'cage_beachball',
-    '1': 'cage_block_1',
-    X: 'cage_weight_1',
+    i: 'ice',
   },
   colours: ['blue', 'yellow', 'red', 'green'],
 
   win: {
-    beachball: 1,
-    block_1: 1,
-    weight_1: 1,
+    ice: 26,
   },
-  moves: 99,
+  moves: 45,
 }
 
 export default level
