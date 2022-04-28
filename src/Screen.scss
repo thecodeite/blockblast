@@ -1,12 +1,61 @@
 
 .Screen{
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
 
   &-head {
     display: flex;;
   }
   &-score {
     width: 100px;
+  }
+  &-foot {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    width: 375px;
+
+    button {
+      font-size: 30px;
+      border-radius: 5px;
+    }
+  }
+}
+
+.BoosterButton {
+  position: relative;
+  &-button {
+    background-color: green;
+  }
+  &_active {
+    .BoosterButton-button {
+      background-color: yellow;
+    }
+  }
+
+  &-children {
+    position: absolute;
+    bottom: 50px;
+    right: 0;
+    display: flex;
+  }
+
+  &-child {
+    width: 20px;
+    height: 20px;
+    margin: 2px;
+    border-radius: 2px;
+
+    border-color: black;
+    &_active {
+      border-color: white;
+    }
+
+    &_red { background-color: var(--red-cell);  }
+    &_green { background-color: var(--green-cell);  }
+    &_blue { background-color: var(--blue-cell);  }
+    &_orange { background-color: var(--orange-cell);  }
+    &_purple { background-color: var(--purple-cell);  }
+    &_yellow { background-color: var(--yellow-cell);  }
   }
 }

@@ -148,7 +148,6 @@ export function createGames(columnsList: Cell[][][], game: Game): Game {
   const nextGame = {
     ...game,
     overlay,
-    movesLeft: game.movesLeft - 1,
     columns,
     nextGame:
       tail.length === 0 ? undefined : createGames(tail, { ...game, overlay }),

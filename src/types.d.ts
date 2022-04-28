@@ -56,6 +56,7 @@ export interface Game {
   currentScore: { [key: string]: number }
   movesLeft: number
   hasWon?: true
+  activeBooster?: string
 }
 
 export interface CellColumn {

@@ -1,3 +1,4 @@
+import { click } from '@testing-library/user-event/dist/click'
 import { useEffect, useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { Board } from './Board'
@@ -67,20 +68,70 @@ export function Screen() {
           <legend>moves</legend>
           {game.movesLeft}
         </fieldset>
-        <label>
-          Auto:
-          <input
-            type="checkbox"
-            checked={auto}
-            onChange={(e) => setAuto(e.target.checked)}
-          />
-        </label>
-        {game.nextGame && !auto ? (
-          <button onClick={() => doNext()}>Next</button>
-        ) : undefined}
-        {count}
+        <div>
+          <label>
+            Auto:
+            <input
+              type="checkbox"
+              checked={auto}
+              onChange={(e) => setAuto(e.target.checked)}
+            />
+          </label>
+
+          {game.nextGame && !auto ? (
+            <button onClick={() => doNext()}>Next</button>
+          ) : undefined}
+          {count}
+          <div>ab: {game.activeBooster}</div>
+        </div>
       </div>
       <Board {...{ game, setGame }} />
+      <div className="Screen-foot">
+        <BoosterButton icon="🔨" name="drill" game={game} setGame={setGame} />
+        <BoosterButton icon="🚂" name="train" game={game} setGame={setGame} />
+        <BoosterButton icon="🪒" name="hover" game={game} setGame={setGame} />
+        <BoosterButton icon="🪣" name="bucket" game={game} setGame={setGame} />
+        <BoosterButton icon="🎨" name="paint" game={game} setGame={setGame} />
+      </div>
+    </div>
+  )
+}
+
+interface BoosterButtonProps {
+  icon: string
+  name: string
+  game: Game
+  setGame: React.Dispatch<React.SetStateAction<Game>>
+}
+function BoosterButton({ icon, name, game, setGame }: BoosterButtonProps) {
+  const active = game.activeBooster?.startsWith(name)
+
+  const click = (booster: string) => {
+    setGame({
+      ...game,
+      activeBooster: active && booster === name ? undefined : booster,
+    })
+  }
+
+  return (
+    <div className={`BoosterButton${active ? ' BoosterButton_active' : ''}`}>
+      <button className="BoosterButton-button" onClick={() => click(name)}>
+        {icon}
+      </button>
+      <div className="BoosterButton-children">
+        {name === 'paint' && active
+          ? game.levelDef.colours.map((colour) => (
+              <button
+                className={`BoosterButton-child BoosterButton-child_${colour} ${
+                  game.activeBooster?.endsWith(colour)
+                    ? 'BoosterButton-child_active'
+                    : ''
+                }`}
+                onClick={() => click(`${name}:${colour}`)}
+              />
+            ))
+          : undefined}
+      </div>
     </div>
   )
 }

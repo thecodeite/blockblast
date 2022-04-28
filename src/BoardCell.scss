@@ -47,26 +47,26 @@
   }
 
   &_red, &_cube_red {
-    background-color: rgb(207, 82, 82);
+    background-color: var(--red-cell);
   }
 
   &_green, &_cube_green {
-    background-color: rgb(80, 116, 38);
+    background-color: var(--green-cell);
   }
 
   &_blue, &_cube_blue {
-    background-color: rgb(78, 105, 153);
+    background-color: var(--blue-cell);
   }
 
   &_yellow, &_cube_yellow {
-    background-color: rgb(255, 252, 72);
+    background-color:  var(--yellow-cell);
   }
   &_purple, &_cube_purple {
-    background-color: rgb(179, 50, 151);
+    background-color:  var(--purple-cell);
   }
 
   &_orange, &_cube_orange {
-    background-color: rgb(193, 127, 27);
+    background-color:  var(--orange-cell);
   }
 
   &_weight_1, &_weight_2, &_weight_3 {

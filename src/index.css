@@ -5,6 +5,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --red-cell: rgb(207, 82, 82);
+  --green-cell: rgb(80, 116, 38);
+  --blue-cell: #009ce5;
+  --yellow-cell: rgb(255, 252, 72);
+  --purple-cell: rgb(179, 50, 151);
+  --orange-cell: rgb(193, 127, 27);
 }
 
 code {

@@ -77,7 +77,7 @@ function doMulti(
   return steps
 }
 
-function tapToy(
+export function tapToy(
   game: Game,
   columns: Cell[][],
   onOrig: Cell,

@@ -1,7 +1,13 @@
 // import 'core-js/actual/array/group-by'
-import { calcScore, doRemove, notUndefined, toRemove } from './cellUtils'
+import {
+  calcScore,
+  doRemove,
+  notUndefined,
+  notUndefinedOrNull,
+  toRemove,
+} from './cellUtils'
 import { makeChallange } from './challanges.ts/challanges'
-import { tapFirstToy } from './game.tapToy'
+import { tapFirstToy, tapToy } from './game.tapToy'
 import {
   addNewCells,
   applyPopEffect,
@@ -18,14 +24,6 @@ import level0 from './levels/level0'
 import levels from './levels/levels'
 import { Prng } from './Prng'
 import { Cell, Game, LevelDef, Overlay, Scores } from './types'
-
-export function pivotArray(initial: string[], width: number): string[][] {
-  const stringCols = Array.from({ length: width }, (_, x) => {
-    return initial.reduce((p, c) => [...p, c[x]], [] as string[])
-  })
-
-  return stringCols
-}
 
 export type CreateCellFunc = (ch: string, x: number, y: number) => Cell
 
@@ -182,14 +180,20 @@ export function createGame(levelString: string): Game {
 }
 
 export function tap(game: Game, on: Cell): Game {
-  if (on.type !== 'colour' && on.type !== 'toy') {
+  let firstGame = game
+  let lastGame = game
+  if (game.activeBooster) {
+    lastGame = firstGame = tapWithBooster(game.activeBooster, game, on)
+  } else if (on.type !== 'colour' && on.type !== 'toy') {
     return game
+  } else {
+    lastGame = firstGame = { ...game, movesLeft: game.movesLeft - 1 }
+    lastGame = firstGame =
+      on.type === 'colour'
+        ? tapColour(firstGame, on)
+        : tapFirstToy(firstGame, on)
   }
 
-  const afterTap =
-    on.type === 'colour' ? tapColour(game, on) : tapFirstToy(game, on)
-
-  let lastGame = afterTap
   while (lastGame.nextGame) {
     lastGame = lastGame.nextGame
   }
@@ -197,7 +201,7 @@ export function tap(game: Game, on: Cell): Game {
   lastGame.nextGame = doTick(lastGame)
   while (lastGame.nextGame) lastGame = lastGame.nextGame
 
-  if (lastGame.currentScore['ice'] > 0) {
+  if (!game.activeBooster && lastGame.currentScore['ice'] > 0) {
     if (lastGame.currentScore['ice'] === game.currentScore['ice']) {
       lastGame.nextGame = addSomeIce(lastGame)
       while (lastGame.nextGame) lastGame = lastGame.nextGame
@@ -215,7 +219,117 @@ export function tap(game: Game, on: Cell): Game {
 
   lastGame.nextGame = countNeigbours(lastGame)
 
-  return afterTap
+  return firstGame
+}
+
+export function tapWithBooster(booster: string, game: Game, on: Cell): Game {
+  let withRemove = game.columns
+  if (booster === 'drill') {
+    if (on.type === 'toy') {
+      return game
+    }
+    withRemove = game.columns.map((col) =>
+      col.map((cell) => {
+        if (cell.id !== on.id) {
+          return cell
+        } else {
+          return toRemove(cell)
+        }
+      })
+    )
+  } else if (booster === 'train') {
+    withRemove = game.columns.map((col) =>
+      col.map((cell) => {
+        if (cell.y !== on.y) {
+          return cell
+        } else {
+          return toRemove(cell)
+        }
+      })
+    )
+  } else if (booster === 'hover') {
+    withRemove = game.columns.map((col) =>
+      col.map((cell) => {
+        if (cell.y > game.levelDef.height || cell.x !== on.x) {
+          return cell
+        } else {
+          return toRemove(cell)
+        }
+      })
+    )
+  } else if (booster === 'bucket') {
+    if (on.type !== 'colour') {
+      return game
+    }
+    const removeColour = game.columns.map((col) =>
+      col.map((cell) => {
+        if (cell.y > game.levelDef.height || cell.variant !== on.variant) {
+          return cell
+        } else {
+          return toRemove(cell)
+        }
+      })
+    )
+    withRemove = applyPopEffect(
+      game,
+      removeColour,
+      removeColour
+        .flat()
+        .filter((cell) => cell?.remove)
+        .filter(notUndefinedOrNull)
+    )
+  } else if (booster.startsWith('paint:')) {
+    const colour = booster.substring('paint:'.length)
+    withRemove = game.columns.map((col) =>
+      col.map((cell) => {
+        if (cell.id !== on.id) {
+          return cell
+        } else {
+          return {
+            ...cell,
+            variant: colour,
+          }
+        }
+      })
+    )
+  }
+
+  const toysToTap: Cell[] = withRemove
+    .flat()
+    .map((cell) => {
+      if (cell?.tap === true) {
+        return {
+          ...cell,
+          tap: undefined,
+        } as Cell
+      }
+      return undefined
+    })
+    .filter(notUndefined)
+
+  const popScoreChange = calcScore(withRemove)
+  const overlayScoreChange = calcOverlayScore(game, withRemove)
+  const withNull = withRemove.map(doRemove)
+  let scoreChange = mergeScores([popScoreChange, overlayScoreChange])
+
+  const moves = [withRemove, withNull]
+
+  const withToyMoves = toysToTap.reduce((p, toy) => {
+    const res = tapToy(game, p[p.length - 1], toy, false)
+    scoreChange = mergeScores([scoreChange, ...res.map((r) => r.scores)])
+    return [...p, ...res.map((r) => r.colls)]
+  }, moves)
+
+  const withFall = withToyMoves[withToyMoves.length - 1]
+    .map(doFall(game))
+    .map(addNewCells(game))
+
+  const gameWithScore = applyScore(game, scoreChange)
+
+  return createGames([...withToyMoves, withNull, withFall], {
+    ...gameWithScore,
+    activeBooster: undefined,
+  })
 }
 
 function addSomeIce(game: Game): Game | undefined {

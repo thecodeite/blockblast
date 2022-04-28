@@ -1,14 +1,4 @@
-import { createOffsets, pivotArray } from './game'
-
-test('pivotArray to give columns in reverse', () => {
-  const input = ['ghi', 'def', 'abc']
-
-  expect(pivotArray(input, 3)).toStrictEqual([
-    ['g', 'd', 'a'],
-    ['h', 'e', 'b'],
-    ['i', 'f', 'c'],
-  ])
-})
+import { createOffsets } from './game'
 
 describe('createHoles', () => {
   test('no holes', () => {
