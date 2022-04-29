@@ -9,6 +9,7 @@ export interface LevelDef {
   moves: number
 
   challanges?: { [key: string]: string }
+  spawn?: { [key: string]: number }[]
 }
 
 export interface Cell {
@@ -46,11 +47,13 @@ export interface ColStat {
 type Scores = { [key: string]: number }
 export interface Game {
   levelString: string
+  id: number
   prng: Prng
   levelDef: LevelDef
   columns: Cell[][]
   overlay: { [key: string]: Overlay }
-  nextGame?: Game
+  //nextGame?: Game
+  previousGame?: Game
   colStats: ColStat[]
 
   currentScore: { [key: string]: number }

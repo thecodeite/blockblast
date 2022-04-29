@@ -12,7 +12,7 @@ import {
   applyPopEffect,
   applyScore,
   calcOverlayScore,
-  createGames,
+  createGames2,
   findNeighbours,
   mergeScores,
   nextId,
@@ -22,12 +22,12 @@ import { Cell, CellFilter, Game, TapStep } from './types'
 function doMulti(
   game: Game,
   neighboursSet: Set<Cell>,
-  columns: Cell[][],
   makeToy: (cell: Cell) => Cell
-) {
+): Game {
+  const columns = game.columns
   const neighbours = [...neighboursSet]
   const cube = neighbours.find((cell) => cell.variant.startsWith('cube'))
-  if (!cube) return []
+  if (!cube) return game
   const colour = cube.variant.substring('cube_'.length)
 
   const matches = columns
@@ -38,55 +38,59 @@ function doMulti(
     )
     .filter(notUndefinedOrNull)
 
-  const steps: TapStep[] = []
+  //const steps: TapStep[] = []
   let colls = columns
-  const toys = matches
+  let currentGame = game
+  const toys = game.prng
+    .randomised(matches)
     .map((colourCell) => {
       let toy = makeToy(colourCell)
 
       const nextSet = colls.map((cells) =>
         cells.map((cell) => (cell?.id === colourCell.id ? toy : cell))
       )
-      steps.push({ colls: nextSet, scores: { [colour]: 1 } })
-      colls = nextSet
+      //steps.push({ colls: nextSet, scores: { [colour]: 1 } })
+      currentGame = createGames2(
+        [nextSet],
+        applyScore(currentGame, { [colour]: 1 })
+      )
+      colls = currentGame.columns
       return toy as undefined | Cell
     })
     .filter(notUndefined)
     .reverse()
 
   const withRemove = colls.map(removeCells(neighbours)).map(doRemove)
-
-  steps.push({ colls: withRemove, scores: {} })
+  currentGame = createGames2([withRemove], currentGame)
+  //steps.push({ colls: withRemove, scores: {} })
 
   toys.forEach((toy) => {
-    const step = steps[steps.length - 1]
-    colls = step.colls
-    const cells = colls.flat()
-    const currentToy = cells.find((cell) => cell && cell.id === toy.id)
+    //const step = steps[steps.length - 1]
+    colls = currentGame.columns
+    const currentToy = colls.flat().find((cell) => cell && cell.id === toy.id)
 
     if (currentToy) {
-      const moves = tapToy(game, colls, currentToy, false)
-      steps.push(...moves)
+      currentGame = createGames2([colls], currentGame)
+      currentGame = tapToy(currentGame, currentToy, false)
+      currentGame = addAndFall(currentGame)
+      //steps.push(...moves)
     }
   })
-  colls = steps[steps.length - 1].colls
-  const [withAdd, withFall] = addAndFall(game, colls) //.map(doFall(game)) //.map(addNewCells(game))
-  steps.push({ colls: withAdd, scores: {} })
-  steps.push({ colls: withFall, scores: {} })
+  //colls = steps[steps.length - 1].colls
+  // const [withAdd, withFall] = addAndFall(game, colls) //.map(doFall(game)) //.map(addNewCells(game))
+  // steps.push({ colls: withAdd, scores: {} })
+  // steps.push({ colls: withFall, scores: {} })
 
-  return steps
+  return addAndFall(currentGame)
 }
 
-export function tapToy(
-  game: Game,
-  columns: Cell[][],
-  onOrig: Cell,
-  isHuman: boolean
-): TapStep[] {
-  if (onOrig.tap) return []
+export function tapToy(game: Game, onOrig: Cell, isHuman: boolean): Game {
+  if (onOrig.tap) return game
+
+  const columns = game.columns
 
   const on = columns.flat().find((cell) => cell.id === onOrig.id)
-  if (!on) return []
+  if (!on) return game
 
   let variant = on.variant
   const neighbours = isHuman
@@ -179,24 +183,26 @@ export function tapToy(
     const makeRotor = (cell: Cell) =>
       ({
         ...cell,
+        neighbours: 0,
         type: 'toy',
         variant: game.prng.nextOf(['rotorH', 'rotorV']),
         id: nextId(),
       } as Cell)
 
-    return doMulti(game, neighbours, columns, makeRotor)
+    return doMulti(game, neighbours, makeRotor)
   } else if (variant === 'multi_bombs') {
     const makeBomb = (cell: Cell) =>
       ({
         ...cell,
+        neighbours: 0,
         type: 'toy',
         variant: 'bomb',
         id: nextId(),
       } as Cell)
 
-    return doMulti(game, neighbours, columns, makeBomb)
+    return doMulti(game, neighbours, makeBomb)
   } else {
-    return []
+    return game
   }
   const withTappedRemoved = columns.map(removeCells([...neighbours]))
   const withTappedNulled = withTappedRemoved.map(doRemove)
@@ -241,36 +247,42 @@ export function tapToy(
   const scoreChange = mergeScores([popScoreChange, overlayScoreChange])
   const withNull = withTapped.map(doRemove)
 
-  const moves: TapStep[] = [
-    { colls: withTappedRemoved, scores: {} },
-    { colls: withToyActivated, scores: scoreChange },
-    withPopEffect ? { colls: withPopEffect, scores: {} } : undefined,
-    { colls: withNull, scores: {} },
-  ].filter(notUndefined)
+  const gameAfter = createGames2(
+    [withTappedRemoved, withToyActivated, withPopEffect, withNull].filter(
+      notUndefined
+    ),
+    applyScore(game, scoreChange)
+  )
+  // const moves: TapStep[] = [
+  //   { colls: withTappedRemoved, scores: {} },
+  //   { colls: withToyActivated, scores: scoreChange },
+  //   withPopEffect ? { colls: withPopEffect, scores: {} } : undefined,
+  //   { colls: withNull, scores: {} },
+  // ].filter(notUndefined)
 
   if (toysToTap.length > 0) {
     console.log('toysToTap:', toysToTap.length)
-    return toysToTap.reduce((p, toy) => {
-      const res = tapToy(game, p[p.length - 1].colls, toy, false)
-      return [...p, ...res]
-    }, moves)
+    return toysToTap.reduce((g, toy) => {
+      return tapToy(g, toy, false)
+    }, gameAfter)
   }
-  return moves
+  return gameAfter
 }
 
 export function tapFirstToy(game: Game, on: Cell): Game {
-  const steps = tapToy(game, game.columns, on, true)
+  const afterTaps = tapToy(game, on, true)
 
-  const scoresList = steps.map((step) => step.scores)
-  const moves = steps.map((step) => step.colls)
+  // const scoresList = steps.map((step) => step.scores)
+  // const moves = steps.map((step) => step.colls)
 
-  const last = steps[steps.length - 1]
-  console.log('steps:', steps)
-  const [withAdd, withFall] = addAndFall(game, last.colls) //.map(doFall(game)) //.map(addNewCells(game))
+  // const last = steps[steps.length - 1]
+  // console.log('steps:', steps)
+  // const [withAdd, withFall] = addAndFall(game, last.colls) //.map(doFall(game)) //.map(addNewCells(game))
+  return addAndFall(afterTaps)
 
-  const scoreChange = mergeScores(scoresList)
+  //const scoreChange = mergeScores(scoresList)
 
-  const gameWithScore = applyScore(game, scoreChange)
+  //const gameWithScore = applyScore(game, scoreChange)
 
-  return createGames([...moves, withAdd, withFall], gameWithScore)
+  // return createGames2([...moves, withAdd, withFall], gameWithScore)
 }

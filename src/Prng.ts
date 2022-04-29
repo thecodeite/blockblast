@@ -33,4 +33,15 @@ export class Prng {
   nextOf<T>(arr: T[]): T {
     return arr[this.nextInt() % arr.length]
   }
+
+  randomised<T>(arr: T[]): T[] {
+    const copy = [...arr]
+    for (let i = 0; i < arr.length; i++) {
+      const r = this.nextInt() % arr.length
+      const t = copy[i]
+      copy[i] = copy[r]
+      copy[r] = t
+    }
+    return copy
+  }
 }

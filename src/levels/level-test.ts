@@ -1,15 +1,27 @@
 import { LevelDef } from '../types'
 
 const manyRotor = [
+  'rrrrrrrro',
+  'gggggggog',
+  'rrrrrrorr',
+  'gggggoggg',
+  'rrrrorrrr',
+  'gggoggggg',
   'rrrrrrrrr',
-  'bgbbgbbgb',
-  'rrrrrrrrr',
-  'rrrrrrrrr',
-  'bbbbbbbbb',
-  // '↔↔↔↔↔↔↔r↔',
-  'yyyyyyyyy',
-  'yyyyyyyy↕',
-  'G↕yyyyyy↔',
+  'ggggggg↔g',
+  'O↕yyyyyyy',
+]
+
+const bombTest = [
+  '111111111',
+  'o********',
+  '111111111',
+  '111111111',
+  'o********',
+  '111111111',
+  'o********',
+  '111111111',
+  'O*yyyyyyy',
 ]
 
 const twoRotor = [
@@ -36,7 +48,19 @@ const bombLine = [
   '*********',
 ]
 
-const needMix = [
+const fallTest = [
+  '111111111',
+  'rrrrrrrrr',
+  'ooooooooo',
+  'oooooooog',
+  'ooooooogg',
+  'ooooooggg',
+  'ooooogggg',
+  'ooooggggg',
+  'Oyogggggg',
+]
+
+const gravity = [
   'rrr', //
   '111',
   'ooo',
@@ -46,9 +70,9 @@ const needMix = [
 ]
 
 export const level: LevelDef = {
-  height: 6,
-  width: 3,
-  initial: needMix,
+  height: 9,
+  width: 9,
+  initial: fallTest,
   colours: ['red', 'green'],
   challanges: {
     '1': 'cage_block_1',

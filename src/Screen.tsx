@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { Board } from './Board'
 import { createGame } from './game'
+import { nextId } from './game.utils'
 import level0 from './levels/level0'
 import levels from './levels/levels'
 
@@ -12,51 +13,72 @@ import { Game } from './types'
 export function Screen() {
   const { level } = useParams()
   const levelString = level || 'level1'
-  const [game, setGame] = useState<Game>(() => createGame(levelString))
+  const [targetGame, setGame] = useState<Game>(() => createGame(levelString))
+  const [currentGame, setCurrentGame] = useState<Game>(targetGame)
   const [auto, setAuto] = useState(true)
 
-  if (game.levelString !== levelString) {
-    setGame(createGame(levelString))
+  if (currentGame.levelString !== levelString) {
+    const newGame = createGame(levelString)
+    setGame(newGame)
+    setCurrentGame(newGame)
   }
 
   let count = 0
-  let tmpGame = game
-  while (tmpGame.nextGame) {
-    tmpGame = tmpGame.nextGame
-    count++
-  }
+  // let tmpGame = game
+  // while (tmpGame.nextGame) {
+  //   tmpGame = tmpGame.nextGame
+  //   count++
+  // }
 
   const doNext = () => {
-    if (game.nextGame) setGame(game.nextGame)
+    if (currentGame !== targetGame) {
+      let nextGame = targetGame
+      while (
+        nextGame.previousGame &&
+        nextGame.previousGame.id !== currentGame.id
+      ) {
+        nextGame = nextGame.previousGame
+      }
+      setCurrentGame(nextGame)
+    }
   }
 
   useEffect(() => {
-    if (auto && game?.nextGame) {
-      const nextGame = game.nextGame
+    if (currentGame?.hasWon) return
+
+    if (auto && currentGame !== targetGame) {
+      let nextGame = targetGame
+      while (
+        nextGame.previousGame &&
+        nextGame.previousGame.id !== currentGame.id
+      ) {
+        nextGame = nextGame.previousGame
+      }
+
       const h = setTimeout(() => {
         //console.log(`tick`)
-        setGame(nextGame)
+        setCurrentGame(nextGame)
       }, 100)
       return () => clearTimeout(h)
     } else {
       //console.log(`done`)
     }
-  }, [game])
+  }, [currentGame, targetGame])
 
-  if (game?.hasWon) {
+  if (currentGame?.hasWon) {
     const nextLevel = parseInt(levelString.substring('level'.length)) + 1
 
     return <Navigate to={`/level` + nextLevel} />
   }
 
-  if (!game) return <div />
+  if (!currentGame) return <div />
 
   return (
     <div className="Screen">
       <div className="Screen-head">
         <fieldset className="Screen-score">
           <legend>score</legend>
-          {Object.entries(game.currentScore).map(([name, count]) => {
+          {Object.entries(currentGame.currentScore).map(([name, count]) => {
             return (
               <div key={name}>
                 {name}:{count}
@@ -66,7 +88,7 @@ export function Screen() {
         </fieldset>
         <fieldset className="Screen-moves">
           <legend>moves</legend>
-          {game.movesLeft}
+          {currentGame.movesLeft}
         </fieldset>
         <div>
           <label>
@@ -78,20 +100,45 @@ export function Screen() {
             />
           </label>
 
-          {game.nextGame && !auto ? (
+          {currentGame !== targetGame && !auto ? (
             <button onClick={() => doNext()}>Next</button>
           ) : undefined}
           {count}
-          <div>ab: {game.activeBooster}</div>
+          <div>ab: {currentGame.activeBooster}</div>
         </div>
       </div>
-      <Board {...{ game, setGame }} />
+      <Board {...{ game: currentGame, setGame }} />
       <div className="Screen-foot">
-        <BoosterButton icon="🔨" name="drill" game={game} setGame={setGame} />
-        <BoosterButton icon="🚂" name="train" game={game} setGame={setGame} />
-        <BoosterButton icon="🪒" name="hover" game={game} setGame={setGame} />
-        <BoosterButton icon="🪣" name="bucket" game={game} setGame={setGame} />
-        <BoosterButton icon="🎨" name="paint" game={game} setGame={setGame} />
+        <BoosterButton
+          icon="🔨"
+          name="drill"
+          game={currentGame}
+          setGame={setGame}
+        />
+        <BoosterButton
+          icon="🚂"
+          name="train"
+          game={currentGame}
+          setGame={setGame}
+        />
+        <BoosterButton
+          icon="🪒"
+          name="hover"
+          game={currentGame}
+          setGame={setGame}
+        />
+        <BoosterButton
+          icon="🪣"
+          name="bucket"
+          game={currentGame}
+          setGame={setGame}
+        />
+        <BoosterButton
+          icon="🎨"
+          name="paint"
+          game={currentGame}
+          setGame={setGame}
+        />
       </div>
     </div>
   )
@@ -110,6 +157,8 @@ function BoosterButton({ icon, name, game, setGame }: BoosterButtonProps) {
     setGame({
       ...game,
       activeBooster: active && booster === name ? undefined : booster,
+      id: nextId(),
+      previousGame: game,
     })
   }
 

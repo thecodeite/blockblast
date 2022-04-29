@@ -101,9 +101,15 @@ export function createColumn(
 //   }
 // }
 
-export function addAndFall(game: Game, columns: Cell[][]): Cell[][][] {
+// export function addAndFall2(game: Game): Game {
+//   const [a, b] = addAndFall(game, game.columns)
+
+//   return createGames2([a, b], game)
+// }
+
+export function addAndFall(game: Game): Game {
   const { colStats } = game
-  const sets = columns.map((column: Cell[], x: number) => {
+  const sets = game.columns.map((column: Cell[], x: number) => {
     const firstNoGravity =
       [...column].reverse().find((c) => c.noGravity)?.y || -1
 
@@ -129,8 +135,8 @@ export function addAndFall(game: Game, columns: Cell[][]): Cell[][][] {
       })
 
     if (firstNoGravity !== -1) {
-      for (let yStart = 0; yStart < firstNoGravity; yStart++) {
-        for (let y = yStart; y < firstNoGravity - 1; y++) {
+      for (let yEnd = firstNoGravity - 1; yEnd > 0; yEnd--) {
+        for (let y = 0; y < yEnd; y++) {
           if (withFall[y].type === 'null' && !withFall[y + 1].noGravity) {
             const tmp = withFall[y + 1]
             withFall[y + 1] = withFall[y]
@@ -149,24 +155,8 @@ export function addAndFall(game: Game, columns: Cell[][]): Cell[][][] {
 
   const a = sets.map((x) => x.a)
   const b = sets.map((x) => x.b)
-  return [a, b]
+  return createGames2([a, b], game)
 }
-
-// export function addNewCells(game: Game) {
-//   return (column: Cell[], x: number): Cell[] => {
-//     const totalExpected = game.colStats[x].length * 2
-//     const missing = totalExpected - column.length
-//     //const spare = game.colStats[x].length - missing
-//     const yStart = totalExpected - missing
-
-//     if (missing > 0) {
-//       const newCells = createColumn(game, missing, x, yStart)
-//       return [...column, ...newCells]
-//     } else {
-//       return column
-//     }
-//   }
-// }
 
 export function mergeScores(scoresList: Scores[]) {
   return scoresList.reduce((total, score) => {
@@ -192,19 +182,32 @@ export function applyScore(game: Game, scoreChange: Scores): Game {
   }
 }
 
-export function createGames(columnsList: Cell[][][], game: Game): Game {
-  const [columns, ...tail] = columnsList
+// export function createGamesX(columnsList: Cell[][][], game: Game): Game {
+//   const [columns, ...tail] = columnsList
 
-  const overlay = calcNewOverlay(game, columns)
-  const nextGame = {
-    ...game,
-    overlay,
-    columns,
-    nextGame:
-      tail.length === 0 ? undefined : createGames(tail, { ...game, overlay }),
-  }
+//   const overlay = calcNewOverlay(game, columns)
+//   const nextGame = {
+//     ...game,
+//     overlay,
+//     columns,
+//     nextGame:
+//       tail.length === 0 ? undefined : createGamesX(tail, { ...game, overlay }),
+//   }
 
-  return nextGame
+//   return nextGame
+// }
+
+export function createGames2(columnsList: Cell[][][], game: Game): Game {
+  return columnsList.reduce((previousGame, columns) => {
+    const overlay = calcNewOverlay(game, columns)
+    return {
+      ...previousGame,
+      overlay,
+      id: nextId(),
+      columns,
+      previousGame,
+    } as Game
+  }, game)
 }
 
 function calcNewOverlay(

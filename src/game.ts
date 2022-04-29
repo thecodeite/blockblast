@@ -14,7 +14,7 @@ import {
   applyScore,
   calcOverlayScore,
   cardinalNeighbourIds,
-  createGames,
+  createGames2,
   findNeighbours,
   mergeScores,
   nextId,
@@ -160,6 +160,7 @@ export function createGame(levelString: string): Game {
   }
 
   const game: Game = {
+    id: 0,
     levelString,
     prng,
     levelDef,
@@ -170,55 +171,44 @@ export function createGame(levelString: string): Game {
     movesLeft: levelDef.moves,
   }
 
-  //const withNewCells = columns.map(addNewCells(game))
-
-  return countNeigbours({
-    ...game,
-    columns,
-  })
+  return countNeigbours(game)
 }
 
 export function tap(game: Game, on: Cell): Game {
-  let firstGame = game
-  let lastGame = game
+  let headGame = game
   if (game.activeBooster) {
-    lastGame = firstGame = tapWithBooster(game.activeBooster, game, on)
+    headGame = tapWithBooster(game.activeBooster, headGame, on)
   } else if (on.type !== 'colour' && on.type !== 'toy') {
     return game
   } else {
-    lastGame = firstGame = { ...game, movesLeft: game.movesLeft - 1 }
-    lastGame = firstGame =
-      on.type === 'colour'
-        ? tapColour(firstGame, on)
-        : tapFirstToy(firstGame, on)
+    headGame = { ...headGame, movesLeft: game.movesLeft - 1 }
+    headGame =
+      on.type === 'colour' ? tapColour(headGame, on) : tapFirstToy(headGame, on)
   }
 
-  while (lastGame.nextGame) {
-    lastGame = lastGame.nextGame
-  }
+  headGame = doTick(headGame)
 
-  lastGame.nextGame = doTick(lastGame)
-  while (lastGame.nextGame) lastGame = lastGame.nextGame
-
-  if (!game.activeBooster && lastGame.currentScore['ice'] > 0) {
-    if (lastGame.currentScore['ice'] === game.currentScore['ice']) {
-      lastGame.nextGame = addSomeIce(lastGame)
-      while (lastGame.nextGame) lastGame = lastGame.nextGame
+  if (!game.activeBooster && headGame.currentScore['ice'] > 0) {
+    if (headGame.currentScore['ice'] === game.currentScore['ice']) {
+      headGame = addSomeIce(headGame)
     }
   }
 
-  const hasWon = Object.entries(lastGame.currentScore).reduce(
+  const hasWon = Object.entries(headGame.currentScore).reduce(
     (won, [_, count]) => won && count === 0,
     true
   )
   console.log('hasWon:', hasWon)
   if (hasWon) {
-    lastGame.hasWon = hasWon
+    headGame = {
+      ...headGame,
+      hasWon: true,
+    }
+  } else {
+    headGame = countNeigbours(headGame)
   }
 
-  lastGame.nextGame = countNeigbours(lastGame)
-
-  return firstGame
+  return headGame
 }
 
 export function tapWithBooster(booster: string, game: Game, on: Cell): Game {
@@ -311,29 +301,42 @@ export function tapWithBooster(booster: string, game: Game, on: Cell): Game {
   const withNull = withRemove.map(doRemove)
   let scoreChange = mergeScores([popScoreChange, overlayScoreChange])
 
-  const moves = [withRemove, withNull]
-
-  const withToyMoves = toysToTap.reduce((p, toy) => {
-    const res = tapToy(game, p[p.length - 1], toy, false)
-    scoreChange = mergeScores([scoreChange, ...res.map((r) => r.scores)])
-    return [...p, ...res.map((r) => r.colls)]
-  }, moves)
-
-  const [withAdd, withFall] = addAndFall(
-    game,
-    withToyMoves[withToyMoves.length - 1]
+  //const moves = [withRemove, withNull]
+  const gameWithRemoveAndNull = createGames2(
+    [withRemove, withNull],
+    applyScore(game, scoreChange)
   )
+
+  // const withToyMoves = toysToTap.reduce((p, toy) => {
+  //   const res = tapToy(game, p[p.length - 1], toy, false)
+  //   scoreChange = mergeScores([scoreChange, ...res.map((r) => r.scores)])
+  //   return [...p, ...res.map((r) => r.colls)]
+  // }, moves)
+
+  const withToyMoves = toysToTap.reduce((currentGame, toy) => {
+    return tapToy(currentGame, toy, false)
+  }, gameWithRemoveAndNull)
+
+  // const [withAdd, withFall] = addAndFall(
+  //   game,
+  //   withToyMoves[withToyMoves.length - 1]
+  // )
   //.map(addNewCells(game))
 
-  const gameWithScore = applyScore(game, scoreChange)
-
-  return createGames([...withToyMoves, withAdd, withFall], {
-    ...gameWithScore,
+  return {
+    ...addAndFall(withToyMoves),
     activeBooster: undefined,
-  })
+  }
+
+  //const gameWithScore = applyScore(game, scoreChange)
+
+  // return createGames2([...withToyMoves, withAdd, withFall], {
+  //   ...gameWithScore,
+  //   activeBooster: undefined,
+  // })
 }
 
-function addSomeIce(game: Game): Game | undefined {
+function addSomeIce(game: Game): Game {
   const allCells = game.columns.flat()
   const iceCubes = allCells.filter((c) => c.variant === 'ice')
   const viableNeibours = iceCubes
@@ -368,18 +371,20 @@ function addSomeIce(game: Game): Game | undefined {
     )
     return {
       ...game,
+      id: nextId(),
       currentScore: {
         ...game.currentScore,
         ice: iceCubes.length + 1,
       },
       columns,
+      previousGame: game,
     }
   } else {
-    return undefined
+    return game
   }
 }
 
-function countNeigbours(game: Game) {
+function countNeigbours(game: Game): Game {
   let columns = game.columns.map((column) =>
     column.map((cell) => {
       if (cell.type !== 'colour' || cell.y >= game.levelDef.height) return cell
@@ -438,13 +443,17 @@ function countNeigbours(game: Game) {
     )
     return {
       ...game,
+      id: nextId(),
       columns: columnsMapped,
+      previousGame: game,
     }
   }
 
   return {
     ...game,
+    id: nextId(),
     columns,
+    previousGame: game,
   }
 }
 
@@ -472,7 +481,7 @@ function areAdjacent(cell1: Cell, cell2: Cell) {
   )
 }
 
-function doTick(game: Game): Game | undefined {
+function doTick(game: Game): Game {
   let changed = false
 
   const withRemove = game.columns.map((column) =>
@@ -490,23 +499,21 @@ function doTick(game: Game): Game | undefined {
     })
   )
 
-  if (!changed) return undefined
+  if (!changed) return game
 
   const scoreChange = calcScore(withRemove)
   const gameWithScore = applyScore(game, scoreChange)
 
   const withNull = withRemove.map(doRemove)
-  const [withAdd, withFall] = addAndFall(game, withNull) //.map(doFall(game)) //.map(addNewCells(game))
 
-  const games = createGames(
-    [withRemove, withNull, withAdd, withFall],
+  const gamesWithNullAndRemove = createGames2(
+    [withRemove, withNull],
     gameWithScore
   )
-  let lastGame = games
-  while (lastGame.nextGame) lastGame = lastGame.nextGame
-  lastGame.nextGame = doTick(lastGame)
 
-  return games
+  const gameWithAddAndFall = addAndFall(gamesWithNullAndRemove)
+
+  return doTick(gameWithAddAndFall)
 }
 
 export function tapColour(game: Game, on: Cell): Game {
@@ -557,11 +564,16 @@ export function tapColour(game: Game, on: Cell): Game {
   const withNull = withRemove.map(doRemove)
   const withToy = withNull.map(addToyAt)
 
-  const [withAdd, withFall] = addAndFall(game, withToy)
-  //withToy.map(doFall(game)) //.map(addNewCells(game))
-
-  return createGames(
-    [withPopEffect, withRemove, withNull, withToy, withAdd, withFall],
+  const res = createGames2(
+    [withPopEffect, withRemove, withNull, withToy],
     gameWithScore
   )
+
+  return addAndFall(res)
+
+  // const [withAdd, withFall] = addAndFall(game, withToy)
+  // //withToy.map(doFall(game)) //.map(addNewCells(game))
+
+  // console.log('res:', res)
+  // return res
 }
