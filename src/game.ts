@@ -65,6 +65,62 @@ export function createOffsets(str: string): number[] {
   return offsets
 }
 
+function createOverlay(levelDef: LevelDef): { [key: string]: Overlay } {
+  // overlayMap
+
+  if (levelDef.overlay) {
+    const { overlay } = levelDef
+    const stringOverlay = Array.from({ length: levelDef.width }, (_, x) => {
+      return overlay.reduce((p, c) => p + c[x], '')
+    })
+
+    const overlayEntries = stringOverlay
+      .map((str, x) => {
+        return str
+          .split('')
+          .reverse()
+          .map((ch, y) => {
+            return {
+              x,
+              y,
+              isBubble: ch === '0',
+            } as Overlay
+          })
+      })
+      .flat()
+      .map((o) => [`${o.x},${o.y}`, o])
+    return Object.fromEntries(overlayEntries) as {
+      [key: string]: Overlay
+    }
+  } else if (levelDef.overlayMap) {
+    const { overlayMap } = levelDef
+    const stringOverlay = Array.from({ length: levelDef.width }, (_, x) => {
+      return levelDef.initial.reduce((p, c) => p + c[x], '')
+    })
+
+    const overlayEntries = stringOverlay
+      .map((str, x) => {
+        return str
+          .split('')
+          .reverse()
+          .map((ch, y) => {
+            return {
+              x,
+              y,
+              isBubble: overlayMap[ch] === 'bubble',
+            } as Overlay
+          })
+      })
+      .flat()
+      .map((o) => [`${o.x},${o.y}`, o])
+    return Object.fromEntries(overlayEntries) as {
+      [key: string]: Overlay
+    }
+  } else {
+    return {}
+  }
+}
+
 export function createGame(levelString: string): Game {
   const levelDef: LevelDef = levels[levelString] || level0
 
@@ -72,10 +128,6 @@ export function createGame(levelString: string): Game {
 
   const stringCols = Array.from({ length: levelDef.width }, (_, x) => {
     return levelDef.initial.reduce((p, c) => p + c[x], '')
-  })
-
-  const stringOverlay = Array.from({ length: levelDef.width }, (_, x) => {
-    return (levelDef.overlay || []).reduce((p, c) => p + c[x], '')
   })
 
   const colStats = stringCols.map((str) => {
@@ -140,24 +192,7 @@ export function createGame(levelString: string): Game {
       })
   })
 
-  const overlayEntries = stringOverlay
-    .map((str, x) => {
-      return str
-        .split('')
-        .reverse()
-        .map((ch, y) => {
-          return {
-            x,
-            y,
-            isBubble: ch === '0',
-          } as Overlay
-        })
-    })
-    .flat()
-    .map((o) => [`${o.x},${o.y}`, o])
-  const overlay = Object.fromEntries(overlayEntries) as {
-    [key: string]: Overlay
-  }
+  const overlay = createOverlay(levelDef)
 
   const game: Game = {
     id: 0,
@@ -169,6 +204,7 @@ export function createGame(levelString: string): Game {
     overlay,
     currentScore: { ...levelDef.win },
     movesLeft: levelDef.moves,
+    spawnLeft: { ...levelDef.spawn },
   }
 
   return countNeigbours(game)

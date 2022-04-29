@@ -4,12 +4,13 @@ export interface LevelDef {
   width: number
   initial: string[]
   overlay?: string[]
+  overlayMap?: { [key: string]: string }
   colours: string[]
   win: Scores
   moves: number
 
   challanges?: { [key: string]: string }
-  spawn?: { [key: string]: number }[]
+  spawn?: { [key: string]: number }
 }
 
 export interface Cell {
@@ -52,7 +53,6 @@ export interface Game {
   levelDef: LevelDef
   columns: Cell[][]
   overlay: { [key: string]: Overlay }
-  //nextGame?: Game
   previousGame?: Game
   colStats: ColStat[]
 
@@ -60,6 +60,7 @@ export interface Game {
   movesLeft: number
   hasWon?: true
   activeBooster?: string
+  spawnLeft?: { [key: string]: number }
 }
 
 export interface CellColumn {

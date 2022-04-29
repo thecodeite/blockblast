@@ -56,6 +56,12 @@ import level50 from './level50'
 import level51 from './level51'
 import level52 from './level52'
 import level53 from './level53'
+import level54 from './level54'
+import level55 from './level55'
+import level56 from './level56'
+import level57 from './level57'
+import level58 from './level58'
+import level59 from './level59'
 
 const levels: { [key: string]: LevelDef } = {
   'level-rotors': levelRotors,
@@ -113,6 +119,12 @@ const levels: { [key: string]: LevelDef } = {
   level51,
   level52,
   level53,
+  level54,
+  level55,
+  level56,
+  level57,
+  level58,
+  level59,
 }
 
 export default levels

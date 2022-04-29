@@ -1,4 +1,5 @@
 import { isCell, notUndefined, notUndefinedOrNull, toRemove } from './cellUtils'
+import { makeChallange } from './challanges.ts/challanges'
 import {
   Cell,
   Game,
@@ -65,20 +66,42 @@ export function findNeighbours(
 
 export function createColumn(
   { prng, colStats, levelDef: { colours } }: Game,
+  spawnLeft: { [key: string]: number } | undefined,
   num: number,
   x: number,
   yStart: number
-): Cell[] {
-  return Array.from({ length: num }, (_, yIndex) => {
+): [Cell[], { [key: string]: number } | undefined] {
+  let spawn = spawnLeft
+  const column = Array.from({ length: num }, (_, yIndex) => {
     const y = colStats[x].offsets[yStart + yIndex]
+
+    if (spawn && Object.keys(spawn).length > 0) {
+      const spawnSet = Object.entries(spawn)
+      const [variant, num] = spawnSet[0]
+
+      spawn = { ...spawn }
+      if (num > 1) {
+        spawn[variant]--
+      } else {
+        delete spawn[variant]
+        if (Object.keys(spawn).length === 0) {
+          spawn = undefined
+        }
+      }
+
+      return makeChallange({ nextId, name: variant, x, y })
+    }
+
     return {
       type: 'colour',
       id: nextId(),
       x,
       y,
       variant: prng.nextOf(colours),
-    }
+    } as Cell
   })
+
+  return [column, spawn]
 }
 
 // export function doFall(game: Game) {
@@ -109,6 +132,7 @@ export function createColumn(
 
 export function addAndFall(game: Game): Game {
   const { colStats } = game
+  let spawnLeft = game.spawnLeft
   const sets = game.columns.map((column: Cell[], x: number) => {
     const firstNoGravity =
       [...column].reverse().find((c) => c.noGravity)?.y || -1
@@ -117,10 +141,18 @@ export function addAndFall(game: Game): Game {
 
     const missing = colStats[x].length - fall.length
 
-    const withAdd =
-      missing > 0
-        ? [...column, ...createColumn(game, missing, x, colStats[x].length)]
-        : column
+    let withAdd = [...column]
+    if (missing > 0) {
+      const [missingCells, spawn] = createColumn(
+        game,
+        spawnLeft,
+        missing,
+        x,
+        colStats[x].length
+      )
+      spawnLeft = spawn
+      withAdd = [...column, ...missingCells]
+    }
 
     let withFall = withAdd
       .filter((c) => c.type !== 'null' || c.y < firstNoGravity)
@@ -135,7 +167,9 @@ export function addAndFall(game: Game): Game {
       })
 
     if (firstNoGravity !== -1) {
-      for (let yEnd = firstNoGravity - 1; yEnd > 0; yEnd--) {
+      const fngIndex =
+        firstNoGravity - (game.levelDef.height - colStats[x].length)
+      for (let yEnd = fngIndex - 1; yEnd > 0; yEnd--) {
         for (let y = 0; y < yEnd; y++) {
           if (withFall[y].type === 'null' && !withFall[y + 1].noGravity) {
             const tmp = withFall[y + 1]
@@ -155,7 +189,10 @@ export function addAndFall(game: Game): Game {
 
   const a = sets.map((x) => x.a)
   const b = sets.map((x) => x.b)
-  return createGames2([a, b], game)
+  return createGames2([a, b], {
+    ...game,
+    spawnLeft,
+  })
 }
 
 export function mergeScores(scoresList: Scores[]) {
@@ -199,7 +236,7 @@ export function applyScore(game: Game, scoreChange: Scores): Game {
 
 export function createGames2(columnsList: Cell[][][], game: Game): Game {
   return columnsList.reduce((previousGame, columns) => {
-    const overlay = calcNewOverlay(game, columns)
+    const overlay = calcNewOverlay(previousGame, columns)
     return {
       ...previousGame,
       overlay,
