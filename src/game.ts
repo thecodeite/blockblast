@@ -156,13 +156,13 @@ export function createGame(levelString: string): Game {
             y,
             variant: colourSymbols[ch],
           }
-        } else if (toySymbols[ch]) {
+        } else if (levelDef.toySymbols?.[ch]) {
           return {
             type: 'toy',
             id: nextId(),
             x,
             y,
-            variant: toySymbols[ch],
+            variant: levelDef.toySymbols[ch],
           }
         } else if (ch === '.') {
           return {
@@ -181,13 +181,14 @@ export function createGame(levelString: string): Game {
             variant: 'null',
           }
         } else {
-          return {
-            type: 'null',
-            id: nextId(),
-            x,
-            y,
-            variant: 'null',
-          }
+          // return {
+          //   type: 'null',
+          //   id: nextId(),
+          //   x,
+          //   y,
+          //   variant: 'null',
+          // }
+          throw new Error('Undefined char:' + ch)
         }
       })
   })

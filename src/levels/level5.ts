@@ -14,6 +14,10 @@ export const level5: LevelDef = {
     '_......._',
     '__.._..__',
   ],
+  toySymbols: {
+    R: 'cube_red',
+    '↔': 'rotorH',
+  },
   colours: ['blue', 'yellow', 'red', 'green', 'purple'],
   win: {
     yellow: 35,

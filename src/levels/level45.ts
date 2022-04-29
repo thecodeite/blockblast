@@ -27,13 +27,13 @@ export const level: LevelDef = {
   ],
   challanges: {
     '0': 'cage_beachball',
-    '1': 'cage_block_1',
+    '1': 'cage_block',
   },
   colours: ['blue', 'yellow', 'red'],
 
   win: {
     beachball: 16,
-    block_1: 16,
+    block: 16,
     bubble: 32,
   },
   moves: 34,

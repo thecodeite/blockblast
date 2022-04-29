@@ -27,12 +27,12 @@ export const level: LevelDef = {
   ],
   challanges: {
     i: 'ice',
-    '1': 'block_1',
+    '1': 'block',
   },
   colours: ['blue', 'yellow', 'red'],
 
   win: {
-    block_1: 18,
+    block: 18,
     bubble: 18,
     ice: 27,
   },

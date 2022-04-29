@@ -1,4 +1,22 @@
 import type { Prng } from './Prng'
+
+interface ScoresDef {
+  red?: number
+  green?: number
+  blue?: number
+  yellow?: number
+  orange?: number
+  purple?: number
+  weight_1?: number
+  weight_2?: number
+  weight_3?: number
+  weight_4?: number
+  beachball?: number
+  block?: number
+  bubble?: number
+  ice?: number
+  cblock?: number
+}
 export interface LevelDef {
   height: number
   width: number
@@ -6,9 +24,10 @@ export interface LevelDef {
   overlay?: string[]
   overlayMap?: { [key: string]: string }
   colours: string[]
-  win: Scores
+  win: ScoresDef
   moves: number
 
+  toySymbols?: { [key: string]: string }
   challanges?: { [key: string]: string }
   spawn?: { [key: string]: number }
 }
@@ -26,6 +45,7 @@ export interface Cell {
 
   noGravity?: true
   child?: Cell
+  meta?: string
 
   onDestroy?: (cell: Cell) => Cell | RemoveCell
   onTick?: (game: Game, cell: Cell) => Cell

@@ -1,7 +1,11 @@
+import { ReactNode } from 'react'
 import './BoardCell.scss'
-import { Cell, Game, Overlay } from './types'
+import { Cell, Game, Overlay } from '../types'
+import { ColourLegoBlock, LegoBlock } from './LegoBlock'
 
-const cellChar: { [key: string]: string } = {
+const cellChar: {
+  [key: string]: string | (({ meta }: { meta?: string }) => ReactNode)
+} = {
   red: 'ᐤ',
   yellow: '★',
   green: '☐',
@@ -28,7 +32,8 @@ const cellChar: { [key: string]: string } = {
 
   beachball: ' ',
 
-  block_1: '_',
+  block: LegoBlock,
+  cblock: ColourLegoBlock,
   cage: '||||',
   ice: '🧊',
 }
@@ -50,13 +55,13 @@ export function BoardCell({
 }: BoardCellArgs) {
   const { type, variant, child, neighbours } = cell
   let char = cellChar[variant] || variant
-  if (neighbours) {
+  if (type === 'colour' && neighbours) {
     if (neighbours >= 9) {
       char = '[]'
     } else if (neighbours >= 7) {
       char = '*'
     } else if (neighbours >= 5) {
-      char = '/'
+      char = '⬀'
     }
   }
 
@@ -83,21 +88,29 @@ export function BoardCell({
     )
   }
 
-  return (
-    <div
-      className={
-        `BoardCell BoardCell_${variant}` +
-        (cell.remove ? ' BoardCell_remove' : '')
-      }
-      style={style}
-      onClick={onClick}
-      onMouseOver={onMouseOver}
-    >
+  const body =
+    typeof char === 'string' ? (
       <svg viewBox="0 0 20 20">
         <text x="10" y="10">
           {char}
         </text>
       </svg>
+    ) : (
+      char({ meta: cell.meta })
+    )
+
+  return (
+    <div
+      className={
+        `BoardCell BoardCell_${variant}` +
+        (cell.remove ? ' BoardCell_remove' : '') +
+        (cell.meta ? ` BoardCell_${variant}_${cell.meta}` : '')
+      }
+      style={style}
+      onClick={onClick}
+      onMouseOver={onMouseOver}
+    >
+      {body}
       {overlay?.isBubble ? (
         <div className="BoardCell-overlay"></div>
       ) : undefined}

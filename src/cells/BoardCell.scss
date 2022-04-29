@@ -80,7 +80,7 @@
     border-radius: 50%;
   }
 
-  &_block_1 {
+  &_block {
     background-color: #f2beb7;
     border-radius: 3px;
     svg {
@@ -89,6 +89,38 @@
       margin-top: 5px;
       width: 60%;
       height: 60%;
+    }
+  }
+
+  &_cblock {
+    border-radius: 3px;
+    svg {
+      border: 2px solid black;
+      border-radius: 3px;
+      margin-left: 5px;
+      margin-top: 5px;
+      width: 60%;
+      height: 60%;
+      background-color: rgba(0, 0, 0, 0.25);
+    }
+
+    &_red {
+      background-color: var(--red-cell);
+    }
+    &_green {
+      background-color: var(--green-cell);
+    }
+    &_yellow {
+      background-color: var(--yellow-cell);
+    }
+    &_blue {
+      background-color: var(--blue-cell);
+    }
+    &_orange {
+      background-color: var(--orange-cell);
+    }
+    &_purple {
+      background-color: var(--purple-cell);
     }
   }
 

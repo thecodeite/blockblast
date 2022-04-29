@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import './Board.scss'
-import { BoardCell, NullBoardCell } from './BoardCell'
+import { BoardCell, NullBoardCell } from './cells/BoardCell'
 import { tap } from './game'
 import { Cell, Game, Overlay } from './types'
 

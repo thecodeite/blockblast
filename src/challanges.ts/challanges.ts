@@ -1,3 +1,4 @@
+import { getSystemErrorMap } from 'util'
 import { toRemove } from '../cellUtils'
 import { Cell, Game } from '../types'
 
@@ -14,14 +15,17 @@ export function makeChallange(props: MakeChallangeProps): Cell {
     return makeBeachBall(props)
   } else if (name.startsWith('weight_')) {
     return makeWeight(props)
-  } else if (name.startsWith('block_')) {
+  } else if (name.startsWith('block')) {
     return makeBlock(props)
   } else if (name.startsWith('cage_')) {
     return makeCage(props)
   } else if (name === 'ice') {
     return makeIce(props)
+  } else if (name.startsWith('cblock_')) {
+    return makeColourBlock(props)
   } else {
-    return makeNull(props)
+    //return makeNull(props)
+    throw new Error('Cant create challange:' + name)
   }
 }
 
@@ -82,11 +86,28 @@ function makeBlock({ name, x, y, nextId }: MakeChallangeProps): Cell {
     x,
     y,
     type: 'challange',
-    variant: name,
+    variant: 'block',
     noGravity: true,
+    meta: name.substring('block_'.length),
 
     onNeighbourPop: (game: Game, cell: Cell, neighbour: Cell) => {
+      if (cell.meta && cell.meta.length > 0) {
+        return {
+          ...cell,
+          meta: cell.meta.substring(1),
+        }
+      }
       return toRemove(cell)
+    },
+
+    onDestroy(cell: Cell) {
+      if (cell.meta && cell.meta.length > 0) {
+        return {
+          ...cell,
+          meta: cell.meta.substring(1),
+        }
+      }
+      return toRemove(cell, true)
     },
   } as Cell
 }
@@ -126,6 +147,26 @@ function makeIce(props: MakeChallangeProps): Cell {
 
     onNeighbourPop: (game: Game, cell: Cell, neighbour: Cell) => {
       return toRemove(cell)
+    },
+  } as Cell
+}
+function makeColourBlock(props: MakeChallangeProps): Cell {
+  const { name, x, y, nextId } = props
+  return {
+    id: nextId(),
+    x,
+    y,
+    type: 'challange',
+    variant: 'cblock',
+    meta: name.substring('cblock_'.length),
+    noGravity: true,
+
+    onNeighbourPop: (game: Game, cell: Cell, neighbour: Cell) => {
+      if (neighbour.variant === cell.meta) {
+        return toRemove(cell)
+      } else {
+        return cell
+      }
     },
   } as Cell
 }

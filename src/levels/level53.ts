@@ -13,14 +13,14 @@ export const level: LevelDef = {
     '.........',
   ],
   challanges: {
-    '1': 'cage_block_1',
+    '1': 'cage_block',
     X: 'weight_1',
     Y: 'weight_2',
   },
   colours: ['blue', 'yellow', 'red'],
 
   win: {
-    block_1: 36,
+    block: 36,
     weight_1: 2,
     weight_2: 2,
   },

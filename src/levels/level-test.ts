@@ -75,7 +75,7 @@ export const level: LevelDef = {
   initial: fallTest,
   colours: ['red', 'green'],
   challanges: {
-    '1': 'cage_block_1',
+    '1': 'cage_block',
   },
   win: {
     red: 999,
