@@ -1,6 +1,6 @@
 import { click } from '@testing-library/user-event/dist/click'
 import { useEffect, useState } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams, Navigate, useNavigate } from 'react-router-dom'
 import { Board } from './Board'
 import { createGame } from './game'
 import { nextId } from './game.utils'
@@ -11,6 +11,7 @@ import './Screen.scss'
 import { Game } from './types'
 
 export function Screen() {
+  const navigate = useNavigate()
   const { level } = useParams()
   const levelString = level || 'level1'
   const [targetGame, setGame] = useState<Game>(() => createGame(levelString))
@@ -68,7 +69,7 @@ export function Screen() {
   if (currentGame?.hasWon) {
     const nextLevel = parseInt(levelString.substring('level'.length)) + 1
 
-    return <Navigate to={`/level` + nextLevel} />
+    return <Navigate to={`/blockblast/level` + nextLevel} />
   }
 
   if (!currentGame) return <div />
@@ -140,6 +141,16 @@ export function Screen() {
           setGame={setGame}
         />
       </div>
+      <select
+        value={levelString}
+        onChange={(e) => navigate(`/blockblast/${e.target.value}`)}
+      >
+        {Object.keys(levels)
+          .filter((str) => /level\d+/.test(str))
+          .map((level) => (
+            <option>{level}</option>
+          ))}
+      </select>
     </div>
   )
 }

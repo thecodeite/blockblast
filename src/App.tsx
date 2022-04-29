@@ -18,8 +18,9 @@ const App: React.FC = (): JSX.Element => {
     strict: true,
     element: <MainLayout />,
     children: [
-      { path: '/', element: <Navigate to="/level1" /> },
-      { path: ':level', element: <Screen /> },
+      { path: '/', element: <Navigate to="blockblast/level1" /> },
+      { path: '/blockblast/', element: <Navigate to="blockblast/level1" /> },
+      { path: '/blockblast/:level', element: <Screen /> },
     ],
   }
 
