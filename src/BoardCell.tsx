@@ -63,7 +63,7 @@ export function BoardCell({
   const style: React.CSSProperties = {
     bottom: `${cell.y * 41}px`,
     visibility: cell.y >= game.levelDef.height ? 'hidden' : 'visible',
-    // opacity: 0.5,
+    //opacity: 0.5,
   }
 
   if (type === 'null') {

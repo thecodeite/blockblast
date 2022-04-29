@@ -9,13 +9,12 @@ import {
 import { makeChallange } from './challanges.ts/challanges'
 import { tapFirstToy, tapToy } from './game.tapToy'
 import {
-  addNewCells,
+  addAndFall,
   applyPopEffect,
   applyScore,
   calcOverlayScore,
   cardinalNeighbourIds,
   createGames,
-  doFall,
   findNeighbours,
   mergeScores,
   nextId,
@@ -171,11 +170,11 @@ export function createGame(levelString: string): Game {
     movesLeft: levelDef.moves,
   }
 
-  const withNewCells = columns.map(addNewCells(game))
+  //const withNewCells = columns.map(addNewCells(game))
 
   return countNeigbours({
     ...game,
-    columns: withNewCells,
+    columns,
   })
 }
 
@@ -320,13 +319,15 @@ export function tapWithBooster(booster: string, game: Game, on: Cell): Game {
     return [...p, ...res.map((r) => r.colls)]
   }, moves)
 
-  const withFall = withToyMoves[withToyMoves.length - 1]
-    .map(doFall(game))
-    .map(addNewCells(game))
+  const [withAdd, withFall] = addAndFall(
+    game,
+    withToyMoves[withToyMoves.length - 1]
+  )
+  //.map(addNewCells(game))
 
   const gameWithScore = applyScore(game, scoreChange)
 
-  return createGames([...withToyMoves, withNull, withFall], {
+  return createGames([...withToyMoves, withAdd, withFall], {
     ...gameWithScore,
     activeBooster: undefined,
   })
@@ -495,9 +496,12 @@ function doTick(game: Game): Game | undefined {
   const gameWithScore = applyScore(game, scoreChange)
 
   const withNull = withRemove.map(doRemove)
-  const withFall = withNull.map(doFall(game)).map(addNewCells(game))
+  const [withAdd, withFall] = addAndFall(game, withNull) //.map(doFall(game)) //.map(addNewCells(game))
 
-  const games = createGames([withRemove, withNull, withFall], gameWithScore)
+  const games = createGames(
+    [withRemove, withNull, withAdd, withFall],
+    gameWithScore
+  )
   let lastGame = games
   while (lastGame.nextGame) lastGame = lastGame.nextGame
   lastGame.nextGame = doTick(lastGame)
@@ -552,10 +556,12 @@ export function tapColour(game: Game, on: Cell): Game {
 
   const withNull = withRemove.map(doRemove)
   const withToy = withNull.map(addToyAt)
-  const withFall = withToy.map(doFall(game)).map(addNewCells(game))
+
+  const [withAdd, withFall] = addAndFall(game, withToy)
+  //withToy.map(doFall(game)) //.map(addNewCells(game))
 
   return createGames(
-    [withPopEffect, withRemove, withNull, withToy, withFall],
+    [withPopEffect, withRemove, withNull, withToy, withAdd, withFall],
     gameWithScore
   )
 }

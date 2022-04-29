@@ -8,12 +8,11 @@ import {
   toRemove,
 } from './cellUtils'
 import {
-  addNewCells,
+  addAndFall,
   applyPopEffect,
   applyScore,
   calcOverlayScore,
   createGames,
-  doFall,
   findNeighbours,
   mergeScores,
   nextId,
@@ -71,7 +70,8 @@ function doMulti(
     }
   })
   colls = steps[steps.length - 1].colls
-  const withFall = colls.map(doFall(game)).map(addNewCells(game))
+  const [withAdd, withFall] = addAndFall(game, colls) //.map(doFall(game)) //.map(addNewCells(game))
+  steps.push({ colls: withAdd, scores: {} })
   steps.push({ colls: withFall, scores: {} })
 
   return steps
@@ -266,11 +266,11 @@ export function tapFirstToy(game: Game, on: Cell): Game {
 
   const last = steps[steps.length - 1]
   console.log('steps:', steps)
-  const withFall = last.colls.map(doFall(game)).map(addNewCells(game))
+  const [withAdd, withFall] = addAndFall(game, last.colls) //.map(doFall(game)) //.map(addNewCells(game))
 
   const scoreChange = mergeScores(scoresList)
 
   const gameWithScore = applyScore(game, scoreChange)
 
-  return createGames([...moves, withFall], gameWithScore)
+  return createGames([...moves, withAdd, withFall], gameWithScore)
 }

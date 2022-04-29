@@ -37,18 +37,22 @@ const bombLine = [
 ]
 
 const needMix = [
-  'rrrrr', //
-  'gbgbg',
-  'bbbbb',
-  'ooooo',
-  'oooor',
+  'rrr', //
+  '111',
+  'ooo',
+  'rrr',
+  'oor',
+  'rrr',
 ]
 
 export const level: LevelDef = {
-  height: 5,
-  width: 5,
+  height: 6,
+  width: 3,
   initial: needMix,
   colours: ['red', 'green'],
+  challanges: {
+    '1': 'cage_block_1',
+  },
   win: {
     red: 999,
   },

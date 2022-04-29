@@ -81,13 +81,42 @@ export function createColumn(
   })
 }
 
-export function doFall(game: Game) {
+// export function doFall(game: Game) {
+//   const { colStats } = game
+//   return (column: Cell[], x: number): Cell[] => {
+//     const firstNoGravity =
+//       [...column].reverse().find((c) => c.noGravity)?.y || -1
+
+//     return column
+//       .filter((c) => c.type !== 'null' || c.y < firstNoGravity)
+//       .map((cell, yIndex) => {
+//         const colStat = colStats[x]
+//         const y = colStat.offsets[yIndex]
+
+//         return {
+//           ...cell,
+//           y,
+//         }
+//       })
+//   }
+// }
+
+export function addAndFall(game: Game, columns: Cell[][]): Cell[][][] {
   const { colStats } = game
-  return (column: Cell[], x: number): Cell[] => {
+  const sets = columns.map((column: Cell[], x: number) => {
     const firstNoGravity =
       [...column].reverse().find((c) => c.noGravity)?.y || -1
 
-    return column
+    const fall = column.filter((c) => c.type !== 'null' || c.y < firstNoGravity)
+
+    const missing = colStats[x].length - fall.length
+
+    const withAdd =
+      missing > 0
+        ? [...column, ...createColumn(game, missing, x, colStats[x].length)]
+        : column
+
+    let withFall = withAdd
       .filter((c) => c.type !== 'null' || c.y < firstNoGravity)
       .map((cell, yIndex) => {
         const colStat = colStats[x]
@@ -98,24 +127,46 @@ export function doFall(game: Game) {
           y,
         }
       })
-  }
-}
 
-export function addNewCells(game: Game) {
-  return (column: Cell[], x: number): Cell[] => {
-    const totalExpected = game.colStats[x].length * 2
-    const missing = totalExpected - column.length
-    //const spare = game.colStats[x].length - missing
-    const yStart = totalExpected - missing
+    if (firstNoGravity !== -1) {
+      for (let yStart = 0; yStart < firstNoGravity; yStart++) {
+        for (let y = yStart; y < firstNoGravity - 1; y++) {
+          if (withFall[y].type === 'null' && !withFall[y + 1].noGravity) {
+            const tmp = withFall[y + 1]
+            withFall[y + 1] = withFall[y]
+            withFall[y] = tmp
 
-    if (missing > 0) {
-      const newCells = createColumn(game, missing, x, yStart)
-      return [...column, ...newCells]
-    } else {
-      return column
+            const tmpY = withFall[y + 1].y
+            withFall[y + 1].y = withFall[y].y
+            withFall[y].y = tmpY
+          }
+        }
+      }
     }
-  }
+
+    return { a: withAdd, b: withFall }
+  })
+
+  const a = sets.map((x) => x.a)
+  const b = sets.map((x) => x.b)
+  return [a, b]
 }
+
+// export function addNewCells(game: Game) {
+//   return (column: Cell[], x: number): Cell[] => {
+//     const totalExpected = game.colStats[x].length * 2
+//     const missing = totalExpected - column.length
+//     //const spare = game.colStats[x].length - missing
+//     const yStart = totalExpected - missing
+
+//     if (missing > 0) {
+//       const newCells = createColumn(game, missing, x, yStart)
+//       return [...column, ...newCells]
+//     } else {
+//       return column
+//     }
+//   }
+// }
 
 export function mergeScores(scoresList: Scores[]) {
   return scoresList.reduce((total, score) => {
