@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/blockblast/static/css/main.de415dd2.css",
-    "main.js": "/blockblast/static/js/main.a0da4153.js",
+    "main.js": "/blockblast/static/js/main.78db822a.js",
     "static/js/787.77f9e39d.chunk.js": "/blockblast/static/js/787.77f9e39d.chunk.js",
     "index.html": "/blockblast/index.html",
     "main.de415dd2.css.map": "/blockblast/static/css/main.de415dd2.css.map",
-    "main.a0da4153.js.map": "/blockblast/static/js/main.a0da4153.js.map",
+    "main.78db822a.js.map": "/blockblast/static/js/main.78db822a.js.map",
     "787.77f9e39d.chunk.js.map": "/blockblast/static/js/787.77f9e39d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.de415dd2.css",
-    "static/js/main.a0da4153.js"
+    "static/js/main.78db822a.js"
   ]
 }
