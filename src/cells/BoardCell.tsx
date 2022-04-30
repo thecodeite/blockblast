@@ -6,8 +6,8 @@ import { ColourLegoBlock, LegoBlock } from './LegoBlock'
 const cellChar: {
   [key: string]: string | (({ meta }: { meta?: string }) => ReactNode)
 } = {
-  red: 'ᐤ',
-  yellow: '★',
+  red: '⊙',
+  yellow: '☆',
   green: '☐',
   blue: '☽',
   orange: '▵',

@@ -43,6 +43,9 @@
     text{
       text-anchor: middle;
       dominant-baseline: middle;
+      opacity: 1;
+      fill: rgb(43, 43, 43);
+      filter: drop-shadow(1px 1px 0px #c4c4c45a);
     }
   }
 

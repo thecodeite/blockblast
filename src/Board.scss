@@ -1,4 +1,5 @@
 .Board {
+  position: relative;
   display: flex;
   flex-direction: row;
   // margin-top: 200px;
@@ -9,6 +10,29 @@
     display: block;
     position: relative;
 
+    
+  }
+
+
+}
+.Board_Background {
+  z-index: -1;
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  margin: 7px 1px;
+  
+  .Board_BackgroundColumn {
+    //position: absolute;
+   
+    //margin: 1px;
+    
+  }
+
+  .Board_BackgroundCell {
+    box-sizing:border-box;
+    width: 42px;
+    height: 41px;
     
   }
 }

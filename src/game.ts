@@ -495,7 +495,7 @@ function countNeigbours(game: Game): Game {
 }
 
 function groupCells(cells: Cell[]) {
-  const groups: Cell[][] = []
+  let groups: Cell[][] = []
 
   cells.forEach((cell) => {
     const adjacent = groups.filter((group) => {
@@ -505,7 +505,11 @@ function groupCells(cells: Cell[]) {
       groups.push([cell])
     } else if (adjacent.length === 1) {
       adjacent[0].push(cell)
-    } else throw new Error('not implemented')
+    } else {
+      groups = groups.filter((g) => adjacent.includes(g))
+      const newGroup = [...adjacent.flat(), cell]
+      groups.push(newGroup)
+    }
   })
 
   return groups

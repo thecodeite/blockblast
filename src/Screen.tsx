@@ -144,11 +144,12 @@ export function Screen() {
       <select
         value={levelString}
         onChange={(e) => navigate(`/blockblast/${e.target.value}`)}
+        style={{ width: 200 }}
       >
         {Object.keys(levels)
           .filter((str) => /level\d+/.test(str))
           .map((level) => (
-            <option>{level}</option>
+            <option key={level}>{level}</option>
           ))}
       </select>
     </div>
@@ -182,6 +183,7 @@ function BoosterButton({ icon, name, game, setGame }: BoosterButtonProps) {
         {name === 'paint' && active
           ? game.levelDef.colours.map((colour) => (
               <button
+                key={colour}
                 className={`BoosterButton-child BoosterButton-child_${colour} ${
                   game.activeBooster?.endsWith(colour)
                     ? 'BoosterButton-child_active'

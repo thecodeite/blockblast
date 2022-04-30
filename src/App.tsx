@@ -21,6 +21,8 @@ const App: React.FC = (): JSX.Element => {
       { path: '/', element: <Navigate to="blockblast/level1" /> },
       { path: '/blockblast/', element: <Navigate to="blockblast/level1" /> },
       { path: '/blockblast/:level', element: <Screen /> },
+      { path: '/blockblast/blockblast/:level', element: <Screen /> },
+      { path: '/:level', element: <Screen /> },
     ],
   }
 
